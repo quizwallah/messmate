@@ -28,7 +28,7 @@
 .theme-toggle{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:0 10px;border:1px solid #e4e8e0;border-radius:999px;background:#fff;color:#55614f;font:600 10px "DM Sans",Arial,sans-serif;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
 .theme-toggle>span:first-child{font-size:15px;line-height:1}
 .theme-toggle:hover{border-color:#becdb6;background:#f7faf4}
-@media(max-width:680px){.theme-toggle{min-height:30px;padding:0 8px;gap:4px}.theme-toggle-label{font-size:9px}.topbar .profile{order:2}.topbar .theme-toggle{order:2;margin-left:auto}.topbar nav{order:3}}
+@media(max-width:680px){.theme-toggle{min-height:30px;padding:0 8px;gap:4px}.theme-toggle-label{font-size:9px}.topbar .profile{order:2}.topbar .theme-toggle{order:2;margin-left:auto}.topbar nav{order:4}}
 :root[data-theme="dark"] .announcement-composer,:root[data-theme="dark"] .announcement-card,:root[data-theme="dark"] .updates-intro,:root[data-theme="dark"] .announcement-poll{background:#1b231c;border-color:#354036;color:#edf2e9}
 :root[data-theme="dark"] .announcement-composer-heading h2,:root[data-theme="dark"] .updates-feed-heading h2,:root[data-theme="dark"] .announcement-card>h2,:root[data-theme="dark"] .announcement-poll-heading h3,:root[data-theme="dark"] .announcement-poll-preview strong,:root[data-theme="dark"] .announcement-author>span:last-child strong{color:#edf2e9}
 :root[data-theme="dark"] .announcement-composer-heading p:last-child,:root[data-theme="dark"] .updates-feed-heading p,:root[data-theme="dark"] .announcement-card-meta time,:root[data-theme="dark"] .announcement-body,:root[data-theme="dark"] .announcement-poll-heading small,:root[data-theme="dark"] .announcement-poll-preview small,:root[data-theme="dark"] .announcement-author{color:#a5b09f}
@@ -43,3 +43,5 @@
 :root[data-theme="dark"] .poll-remove-option{background:#354034;color:#cbd5c7}
 :root[data-theme="dark"] .updates-board-mark{background:#273427;border-color:#3a4a37;color:#bed5b1}
 :root[data-theme="dark"] .announcement-image{background:#202920}
+:root[data-theme="dark"] .admin-entry-link{border-color:#40503d;background:#273427;color:#d2e3c7}
+:root[data-theme="dark"] .admin-entry-link:hover{border-color:#61785b;background:#30402f}
