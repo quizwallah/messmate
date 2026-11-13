@@ -38,11 +38,6 @@ export default function SiteShell({ children }: { children: ReactNode }) {
       setFullName(null);
       setRole(null);
     };
-    void supabase.auth.getUser().then(({ data }) => {
-      const id = data.user?.id;
-      if (!id) { setScholarNumber(null); setFullName(null); setRole(null); return; }
-      void loadProfile(id);
-    });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const id = session?.user.id;
       if (!id) { clearProfile(); return; }

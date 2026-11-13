@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { normalizeScholarNumber, scholarEmail } from "../../lib/auth/scholar";
 import { createClient } from "../../lib/supabase/client";
 
@@ -19,7 +19,6 @@ function safeNextPath(value: string | null) {
 }
 
 export default function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [scholarNumber, setScholarNumber] = useState("");
   const [password, setPassword] = useState("");
@@ -55,8 +54,7 @@ export default function LoginForm() {
         await supabase.auth.signOut();
         throw new Error("This account does not have student access. Use the staff login page.");
       }
-      router.replace(safeNextPath(searchParams.get("next")));
-      router.refresh();
+      window.location.replace(safeNextPath(searchParams.get("next")));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Sign-in is temporarily unavailable.");
     } finally {
@@ -146,8 +144,7 @@ export default function LoginForm() {
         const { error: passwordError } = await supabase.auth.updateUser({ password: newPassword });
         if (passwordError) throw passwordError;
 
-        router.replace(safeNextPath(searchParams.get("next")));
-        router.refresh();
+        window.location.replace(safeNextPath(searchParams.get("next")));
         return;
       }
 
@@ -169,8 +166,7 @@ export default function LoginForm() {
       const { error: passwordError } = await supabase.auth.updateUser({ password: newPassword });
       if (passwordError) throw passwordError;
 
-      router.replace(safeNextPath(searchParams.get("next")));
-      router.refresh();
+      window.location.replace(safeNextPath(searchParams.get("next")));
     } catch {
       setNotice("The code may be incorrect or expired. Request a new code and try again.");
     } finally {

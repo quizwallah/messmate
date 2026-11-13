@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import { normalizeScholarNumber, scholarEmail } from "../../lib/auth/scholar";
 import { createClient } from "../../lib/supabase/client";
 
 export default function StaffLoginForm() {
-  const router = useRouter();
   const [scholarNumber, setScholarNumber] = useState("");
   const [password, setPassword] = useState("");
   const [notice, setNotice] = useState("");
@@ -36,8 +34,7 @@ export default function StaffLoginForm() {
         await supabase.auth.signOut();
         throw new Error("This account does not have active staff access.");
       }
-      router.replace("/portal");
-      router.refresh();
+      window.location.replace("/portal");
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Staff sign-in is temporarily unavailable.");
     } finally {
