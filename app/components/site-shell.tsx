@@ -24,23 +24,31 @@ export default function SiteShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(async ({ data }) => {
+    let disposed = false;
+    const loadProfile = async (id: string) => {
+      const { data: profile } = await supabase.from("profiles").select("scholar_number, full_name, role").eq("id", id).maybeSingle();
+      if (disposed) return;
+      setScholarNumber(profile?.scholar_number ?? null);
+      setFullName(profile?.full_name ?? null);
+      setRole(profile?.role ?? null);
+    };
+    const clearProfile = () => {
+      if (disposed) return;
+      setScholarNumber(null);
+      setFullName(null);
+      setRole(null);
+    };
+    void supabase.auth.getUser().then(({ data }) => {
       const id = data.user?.id;
       if (!id) { setScholarNumber(null); setFullName(null); setRole(null); return; }
-      const { data: profile } = await supabase.from("profiles").select("scholar_number, full_name, role").eq("id", id).maybeSingle();
-      setScholarNumber(profile?.scholar_number ?? null);
-      setFullName(profile?.full_name ?? null);
-      setRole(profile?.role ?? null);
+      void loadProfile(id);
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const id = session?.user.id;
-      if (!id) { setScholarNumber(null); setFullName(null); setRole(null); return; }
-      const { data: profile } = await supabase.from("profiles").select("scholar_number, full_name, role").eq("id", id).maybeSingle();
-      setScholarNumber(profile?.scholar_number ?? null);
-      setFullName(profile?.full_name ?? null);
-      setRole(profile?.role ?? null);
+      if (!id) { clearProfile(); return; }
+      window.setTimeout(() => { void loadProfile(id); }, 0);
     });
-    return () => subscription.unsubscribe();
+    return () => { disposed = true; subscription.unsubscribe(); };
   }, []);
 
   async function signOut() {

@@ -1,6 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+function redirectWithAuthState(url: URL, source: NextResponse) {
+  const response = NextResponse.redirect(url);
+  for (const cookie of source.cookies.getAll()) {
+    response.cookies.set(cookie.name, cookie.value, cookie);
+  }
+  for (const name of ["cache-control", "expires", "pragma"]) {
+    const value = source.headers.get(name);
+    if (value) response.headers.set(name, value);
+  }
+  return response;
+}
+
 export async function proxy(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -42,21 +54,21 @@ export async function proxy(request: NextRequest) {
     const portalUrl = request.nextUrl.clone();
     portalUrl.pathname = "/portal";
     portalUrl.search = "";
-    return NextResponse.redirect(portalUrl);
+    return redirectWithAuthState(portalUrl, response);
   }
 
   if (studentPath && !activeStudent) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     loginUrl.searchParams.set("next", request.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
+    return redirectWithAuthState(loginUrl, response);
   }
 
   if (staffPath && !activeStaff) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = activeStudent ? "/" : "/staff/login";
     loginUrl.searchParams.delete("next");
-    return NextResponse.redirect(loginUrl);
+    return redirectWithAuthState(loginUrl, response);
   }
 
   return response;
