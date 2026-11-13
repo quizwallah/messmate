@@ -52,7 +52,7 @@ export default function LoginForm() {
         : { data: null, error: null };
       if (profile.error || profile.data?.role !== "student" || !profile.data.is_active) {
         await supabase.auth.signOut();
-        throw new Error("This account does not have student access. Use the staff login page.");
+        throw new Error("This account does not have student access. Use the Admin Portal sign-in.");
       }
       window.location.replace(safeNextPath(searchParams.get("next")));
     } catch (error) {

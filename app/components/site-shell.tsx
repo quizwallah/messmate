@@ -66,6 +66,6 @@ export default function SiteShell({ children }: { children: ReactNode }) {
       <span className="profile"><span className="avatar">{(fullName ?? scholarNumber)?.charAt(0) ?? "S"}</span><span className="profile-name">{fullName ?? scholarNumber ?? "Student"}</span>{scholarNumber ? <button className="profile-action" type="button" onClick={signOut}>Sign out</button> : <Link className="profile-action" href="/login">Sign in</Link>}</span>
     </header>
     {children}
-    <footer><Link className="brand footer-brand" href="/"><span className="brand-mark">M</span><span>mess<span className="brand-light">mate</span></span></Link><span>Made for better days at the mess.</span><span>Questions? Contact your mess convenor. · <Link href="/staff/login">Staff login</Link></span></footer>
+    <footer><Link className="brand footer-brand" href="/"><span className="brand-mark">M</span><span>mess<span className="brand-light">mate</span></span></Link><span>Made for better days at the mess.</span><span>Questions? Contact your mess convenor. · <Link href="/staff/login">Admin Portal</Link></span></footer>
   </>;
 }

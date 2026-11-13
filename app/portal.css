@@ -184,3 +184,61 @@
 @media(max-width:900px){.staff-portal{margin:0 2%}.portal-activity-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:680px){.staff-portal{gap:12px;margin:0}.portal-welcome{align-items:flex-start;padding:18px;flex-direction:column}.portal-welcome h2{font-size:22px}.portal-welcome .button{align-self:stretch}.portal-tabs{margin:0 -2px;padding:5px}.portal-tabs button{padding:9px 11px}.portal-filters{padding:13px;gap:9px}.portal-filters label{min-width:calc(50% - 8px)}.portal-stat-grid{gap:8px}.portal-stat-grid>.panel{padding:14px}.portal-stat-grid small{min-height:24px}.portal-stat-grid strong{font-size:23px}.portal-activity-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.portal-overview{padding:18px}.portal-record{padding:15px}.portal-records>h2{font-size:17px}.portal-updates-layout{grid-template-columns:1fr}.add-scholar-form{grid-template-columns:1fr}.add-scholar-form h3{grid-column:auto}.portal-status-control{align-items:flex-start;flex-direction:column}}
 @media(max-width:600px){.my-complaints-summary{align-items:flex-start;flex-wrap:wrap;padding:14px}.my-complaints-summary>div:first-child{flex-basis:calc(100% - 84px)}.complaint-summary-counts{order:3;width:100%;padding-left:50px}.complaint-card{padding:15px}.complaint-card-meta{align-items:flex-start;flex-direction:column;gap:4px}.complaints-notice{align-items:flex-start}}
+
+/* Dedicated, full-width Admin Portal sign-in */
+.admin-login-page{min-height:100vh;padding:0 max(calc((100vw - 1160px)/2),6.5%);display:flex;flex-direction:column;background:radial-gradient(ellipse at 18% 45%,#edf2e7 0,#f6f7f2 48%,#f8f8f5 100%);color:var(--ink)}
+.admin-login-topbar{height:84px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e8ebe3}
+.admin-login-topbar>div{display:flex;align-items:center;gap:20px}
+.admin-secure-label{display:flex;align-items:center;gap:7px;color:#697864;font-size:9px;font-weight:800;letter-spacing:1.3px}
+.admin-secure-label i{width:7px;height:7px;border-radius:50%;background:#6e9e60;box-shadow:0 0 0 4px #6e9e6018}
+.admin-login-layout{flex:1;width:100%;max-width:1160px;margin:auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(420px,.86fr);align-items:center;gap:clamp(48px,8vw,112px);padding:68px 0 78px}
+.admin-login-intro .eyebrow{color:#62765c;margin-bottom:17px}
+.admin-login-intro h1{font:700 clamp(42px,5vw,62px)/1.08 Manrope,Arial,sans-serif;letter-spacing:-2.8px;margin:0 0 18px;color:#283327}
+.admin-login-intro h1 em{font:italic 500 1em Georgia,serif;color:#55794d}
+.admin-login-lede{max-width:465px;color:#707a6d;font-size:15px;line-height:1.75;margin:0}
+.admin-login-highlights{display:grid;gap:20px;margin-top:37px;max-width:490px}
+.admin-login-highlights>div{display:flex;align-items:flex-start;gap:14px}
+.admin-login-highlights>div>span{flex:0 0 34px;width:34px;height:34px;display:grid;place-items:center;border:1px solid #dfe7d8;border-radius:11px;background:#f9fbf6;color:#648059;font:700 10px Manrope,Arial,sans-serif}
+.admin-login-highlights p{margin:0}
+.admin-login-highlights strong,.admin-login-highlights small{display:block}
+.admin-login-highlights strong{color:#364033;font-size:12px}
+.admin-login-highlights small{margin-top:4px;color:#899184;font-size:11px;line-height:1.5}
+.admin-login-support{display:inline-flex;align-items:center;gap:8px;margin:34px 0 0;padding:9px 12px;border:1px solid #e1e8db;border-radius:999px;background:#f8faf5;color:#74806e;font-size:10px}
+.admin-login-support:before{content:"✓";display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:#e6efdf;color:#55794d;font-weight:800}
+.admin-login-form-wrap{width:100%;padding:32px;border:1px solid #e4e9df;border-radius:22px;background:rgba(255,255,255,.92);box-shadow:0 24px 70px #34452a12}
+.admin-login-form-heading{position:relative;margin-bottom:25px;padding-left:60px;min-height:47px}
+.admin-login-icon{position:absolute;top:0;left:0;width:46px;height:46px;display:grid;place-items:center;border-radius:14px;background:#edf3e8;color:#56794d;font-size:19px}
+.admin-login-form-heading .eyebrow{margin:0 0 5px;color:#718269;font-size:9px}
+.admin-login-form-heading h2{margin:0;color:#2e382c;font:700 23px/1.25 Manrope,Arial,sans-serif;letter-spacing:-.55px}
+.admin-login-form-heading>p:last-child{margin:6px 0 0;color:#838b7f;font-size:11px;line-height:1.5}
+.admin-login-form-card{padding:0;border:0;background:transparent}
+.admin-login-form-card .login-form{gap:18px}
+.admin-login-form-card .login-form label{gap:8px;color:#525e4e;font-size:11px}
+.admin-login-form-card .login-form input{min-height:51px;padding:13px 14px;border-color:#e0e6dc;border-radius:10px;background:#fbfcfa;font-size:13px}
+.admin-login-form-card .login-form input::placeholder{color:#a0a69d}
+.admin-login-form-card .login-form input:focus{outline:3px solid #a9c29d55;border-color:#9db590}
+.admin-login-submit{min-height:51px;margin-top:5px;border-radius:10px;background:#355a38;font-size:12px;box-shadow:0 7px 15px #355a3825}
+.admin-login-submit:hover{background:#294b2e}
+.admin-login-form-card .inline-notice{margin-top:15px;font-size:11px;line-height:1.55}
+.admin-login-card-foot{display:flex;align-items:center;gap:9px;margin-top:20px;padding-top:16px;border-top:1px solid #edf0e9}
+.admin-login-card-foot>span{color:#718568;font-size:17px}
+.admin-login-card-foot p{margin:0;color:#858d80;font-size:10px;line-height:1.5}
+.admin-login-student-link{text-align:center;margin:19px 0 0;color:#858d81;font-size:10px}
+.admin-login-student-link a{color:#4e7547;font-weight:700;text-decoration:none;white-space:nowrap}
+.admin-login-student-link a:hover{text-decoration:underline}
+.admin-login-footer{width:100%;max-width:1160px;margin:0 auto;padding:18px 0 22px;border-top:1px solid #e8ebe3;display:flex;align-items:center;justify-content:space-between;gap:16px;color:#8a9186;font-size:10px}
+.admin-login-footer a{color:#61765a;text-decoration:none;font-weight:600}
+@media(max-width:850px){.admin-login-page{padding:0 5%}.admin-login-layout{grid-template-columns:minmax(0,1fr) minmax(360px,.92fr);gap:36px}.admin-login-form-wrap{padding:26px}.admin-login-intro h1{font-size:46px}}
+@media(max-width:680px){.admin-login-page{padding:0 18px;background:radial-gradient(ellipse at 30% 5%,#edf2e7 0,#f6f7f2 45%,#f8f8f5 100%)}.admin-login-topbar{height:69px}.admin-login-topbar>div{gap:10px}.admin-secure-label{font-size:7px;letter-spacing:.7px}.admin-login-layout{grid-template-columns:1fr;gap:30px;padding:38px 0 42px}.admin-login-intro h1{font-size:40px;letter-spacing:-1.8px}.admin-login-lede{font-size:13px;line-height:1.65}.admin-login-highlights{grid-template-columns:1fr;gap:14px;margin-top:23px}.admin-login-highlights>div>span{width:30px;height:30px;flex-basis:30px}.admin-login-highlights small{font-size:10px}.admin-login-support{margin-top:20px}.admin-login-form-wrap{padding:22px 19px;border-radius:17px}.admin-login-form-heading{margin-bottom:21px}.admin-login-form-heading h2{font-size:21px}.admin-login-form-card .login-form{gap:15px}.admin-login-form-card .login-form input,.admin-login-submit{min-height:48px}.admin-login-footer{padding:15px 0 19px;align-items:flex-start;flex-direction:column;gap:8px}}
+:root[data-theme="dark"] .admin-login-page{background:radial-gradient(ellipse at 18% 45%,#202a20 0,#131913 52%,#121712 100%);color:#edf2e9}
+:root[data-theme="dark"] .admin-login-topbar,:root[data-theme="dark"] .admin-login-footer{border-color:#354036}
+:root[data-theme="dark"] .admin-login-intro h1,:root[data-theme="dark"] .admin-login-highlights strong,:root[data-theme="dark"] .admin-login-form-heading h2{color:#edf2e9}
+:root[data-theme="dark"] .admin-login-lede,:root[data-theme="dark"] .admin-login-highlights small,:root[data-theme="dark"] .admin-login-form-heading>p:last-child,:root[data-theme="dark"] .admin-login-student-link,:root[data-theme="dark"] .admin-login-footer{color:#a5b09f}
+:root[data-theme="dark"] .admin-login-form-wrap{border-color:#354036;background:rgba(27,35,28,.95);box-shadow:0 24px 70px #0004}
+:root[data-theme="dark"] .admin-login-icon,:root[data-theme="dark"] .admin-login-highlights>div>span{border-color:#3d4b3a;background:#263127;color:#c6d9bb}
+:root[data-theme="dark"] .admin-login-form-card .login-form label{color:#c6d0c0}
+:root[data-theme="dark"] .admin-login-form-card .login-form input{border-color:#3b483b;background:#141a15;color:#edf2e9}
+:root[data-theme="dark"] .admin-login-form-card .login-form input::placeholder{color:#7e897b}
+:root[data-theme="dark"] .admin-login-card-foot{border-color:#344034}
+:root[data-theme="dark"] .admin-login-card-foot p,:root[data-theme="dark"] .admin-login-secure-label{color:#a5b09f}
+:root[data-theme="dark"] .admin-login-support{border-color:#3a4738;background:#202920;color:#bfccb9}
