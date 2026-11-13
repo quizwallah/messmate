@@ -1,0 +1,45 @@
+:root{color-scheme:light}
+:root[data-theme="dark"]{color-scheme:dark;--ink:#eef2eb;--muted:#a5afa0;--line:#354036;--paper:#121712;--white:#1b221b;--green:#8fb17d;--green-dark:#abc99a}
+:root[data-theme="dark"] body{background:#121712;color:var(--ink)}
+:root[data-theme="dark"] .topbar{background:rgba(25,32,25,.94);border-color:#303a30}
+:root[data-theme="dark"] .panel,:root[data-theme="dark"] .feature-link,:root[data-theme="dark"] .portal-filters,:root[data-theme="dark"] .portal-welcome,:root[data-theme="dark"] .portal-overview,:root[data-theme="dark"] .portal-record,:root[data-theme="dark"] .portal-updates-layout>.panel,:root[data-theme="dark"] .login-card,:root[data-theme="dark"] .my-complaints-summary,:root[data-theme="dark"] .complaint-card,:root[data-theme="dark"] .complaints-notice{background:#1b231c;border-color:#354036;color:var(--ink);box-shadow:0 5px 18px #00000020}
+:root[data-theme="dark"] .portal-tabs{background:#202920;border-color:#354036}
+:root[data-theme="dark"] .portal-tabs button{color:#bbc5b6}
+:root[data-theme="dark"] .portal-tabs button.selected,:root[data-theme="dark"] .portal-activity-grid button{background:#283229;color:#e5ebe1;border-color:#3c493b;box-shadow:none}
+:root[data-theme="dark"] .portal-activity-grid button:hover{background:#303d31}
+:root[data-theme="dark"] .portal-record h3,:root[data-theme="dark"] .portal-overview h2,:root[data-theme="dark"] .portal-records>h2,:root[data-theme="dark"] .portal-updates-layout h2,:root[data-theme="dark"] .portal-welcome h2,:root[data-theme="dark"] .my-complaints-summary strong,:root[data-theme="dark"] .complaint-card h2{color:#edf2e9}
+:root[data-theme="dark"] .page-heading>p:last-child,:root[data-theme="dark"] .section-copy,:root[data-theme="dark"] .portal-record>p,:root[data-theme="dark"] .portal-record-person,:root[data-theme="dark"] .portal-record time,:root[data-theme="dark"] .portal-record>small,:root[data-theme="dark"] .my-complaints-summary small,:root[data-theme="dark"] .complaint-card-meta,:root[data-theme="dark"] .complaint-card .complaint-location{color:#a4afa0}
+:root[data-theme="dark"] .portal-filters label,:root[data-theme="dark"] .portal-form label,:root[data-theme="dark"] .portal-status-control{color:#bcc6b7}
+:root[data-theme="dark"] input,:root[data-theme="dark"] select,:root[data-theme="dark"] textarea,:root[data-theme="dark"] .portal-filters input,:root[data-theme="dark"] .portal-filters select,:root[data-theme="dark"] .portal-status-control select,:root[data-theme="dark"] .portal-table select,:root[data-theme="dark"] .portal-form input,:root[data-theme="dark"] .portal-form textarea{background:#141a15;border-color:#3b483b;color:#edf2e9}
+:root[data-theme="dark"] .topbar nav a{color:#b2bcae}
+:root[data-theme="dark"] .topbar nav a.active{color:#b7d4a8}
+:root[data-theme="dark"] .profile,:root[data-theme="dark"] .theme-toggle{background:#202920;border-color:#3b483b;color:#e6ece2}
+:root[data-theme="dark"] .avatar,:root[data-theme="dark"] .complaint-summary-icon,:root[data-theme="dark"] .feature-icon{background:#293629;color:#b8d5a8}
+:root[data-theme="dark"] .meal-row,:root[data-theme="dark"] .weekly-row{border-color:#303a30}
+:root[data-theme="dark"] .meal-info>span,:root[data-theme="dark"] .menu-note,:root[data-theme="dark"] .meal-time small,:root[data-theme="dark"] .weekly-row>span{color:#bdc6b8}
+:root[data-theme="dark"] .home-note,:root[data-theme="dark"] .availability-card,:root[data-theme="dark"] .availability-layout .panel,:root[data-theme="dark"] .feedback-panel{background:#202920;border-color:#354036;color:var(--ink)}
+:root[data-theme="dark"] .complaint-page-card,:root[data-theme="dark"] .complaint-strip{background:#29201e;border-color:#4a3832;color:#eee3dc}
+:root[data-theme="dark"] .complaint-card .complaint-details,:root[data-theme="dark"] .update-editor,:root[data-theme="dark"] .weekly-head,:root[data-theme="dark"] .portal-table th{background:#242d24;color:#d4ddd0}
+:root[data-theme="dark"] .portal-table td{border-color:#303a30;color:#d2dace}
+:root[data-theme="dark"] .announcement-card,:root[data-theme="dark"] .announcement-poll{background:#1b231c;border-color:#354036;color:var(--ink)}
+:root[data-theme="dark"] .announcement-poll-option{background:#202920;border-color:#3b483b;color:#e6ece2}
+:root[data-theme="dark"] footer{border-color:#354036;color:#9da899}
+:root[data-theme="dark"] .empty-state{color:#a2ad9f}
+.theme-toggle{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:0 10px;border:1px solid #e4e8e0;border-radius:999px;background:#fff;color:#55614f;font:600 10px "DM Sans",Arial,sans-serif;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.theme-toggle>span:first-child{font-size:15px;line-height:1}
+.theme-toggle:hover{border-color:#becdb6;background:#f7faf4}
+@media(max-width:680px){.theme-toggle{min-height:30px;padding:0 8px;gap:4px}.theme-toggle-label{font-size:9px}.topbar .profile{order:2}.topbar .theme-toggle{order:2;margin-left:auto}.topbar nav{order:3}}
+:root[data-theme="dark"] .announcement-composer,:root[data-theme="dark"] .announcement-card,:root[data-theme="dark"] .updates-intro,:root[data-theme="dark"] .announcement-poll{background:#1b231c;border-color:#354036;color:#edf2e9}
+:root[data-theme="dark"] .announcement-composer-heading h2,:root[data-theme="dark"] .updates-feed-heading h2,:root[data-theme="dark"] .announcement-card>h2,:root[data-theme="dark"] .announcement-poll-heading h3,:root[data-theme="dark"] .announcement-poll-preview strong,:root[data-theme="dark"] .announcement-author>span:last-child strong{color:#edf2e9}
+:root[data-theme="dark"] .announcement-composer-heading p:last-child,:root[data-theme="dark"] .updates-feed-heading p,:root[data-theme="dark"] .announcement-card-meta time,:root[data-theme="dark"] .announcement-body,:root[data-theme="dark"] .announcement-poll-heading small,:root[data-theme="dark"] .announcement-poll-preview small,:root[data-theme="dark"] .announcement-author{color:#a5b09f}
+:root[data-theme="dark"] .announcement-upload-grid .upload-field,:root[data-theme="dark"] .poll-builder,:root[data-theme="dark"] .poll-fields,:root[data-theme="dark"] .update-editor,:root[data-theme="dark"] .announcement-audio,:root[data-theme="dark"] .announcement-poll-preview{background:#202920;border-color:#394638;color:#e5ece0}
+:root[data-theme="dark"] .poll-enable strong,:root[data-theme="dark"] .poll-answer-title,:root[data-theme="dark"] .announcement-poll-preview li{color:#dce5d7}
+:root[data-theme="dark"] .announcement-poll-option,:root[data-theme="dark"] .announcement-poll-preview li{background:#202920;border-color:#3a4738;color:#e2e9de}
+:root[data-theme="dark"] .announcement-poll-option.show-result{background:#263128}
+:root[data-theme="dark"] .poll-result-track{background:#354235}
+:root[data-theme="dark"] .announcement-author{border-color:#344034}
+:root[data-theme="dark"] .announcement-tag,:root[data-theme="dark"] .updates-live{background:#273427;border-color:#40503d;color:#c6d9bb}
+:root[data-theme="dark"] .announcement-poll-heading>span,:root[data-theme="dark"] .announcement-audio>span,:root[data-theme="dark"] .composer-icon,:root[data-theme="dark"] .announcement-author-avatar,:root[data-theme="dark"] .poll-answer-dot{background:#30402e;color:#c8dfb8}
+:root[data-theme="dark"] .poll-remove-option{background:#354034;color:#cbd5c7}
+:root[data-theme="dark"] .updates-board-mark{background:#273427;border-color:#3a4a37;color:#bed5b1}
+:root[data-theme="dark"] .announcement-image{background:#202920}

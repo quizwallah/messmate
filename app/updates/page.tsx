@@ -2,5 +2,5 @@ import SiteShell from "../components/site-shell";
 import AnnouncementsList from "../components/announcements-list";
 
 export default function UpdatesPage() {
-  return <SiteShell><main className="page-main"><section className="page-heading"><p className="eyebrow">MESSMATE BOARD</p><h1>Updates</h1><p>Announcements from the mess admin, convenor and warden.</p></section><AnnouncementsList /></main></SiteShell>;
+  return <SiteShell><main className="page-main updates-page-main"><section className="page-heading updates-page-heading"><div><p className="eyebrow"><i className="live-dot"/> OFFICIAL MESS BOARD</p><h1>Updates <em>& notices.</em></h1><p>Announcements from the admin, convenor and warden—plus polls and voice notes to keep everyone in the loop.</p></div><span className="updates-board-mark" aria-hidden="true">↗</span></section><AnnouncementsList /></main></SiteShell>;
 }

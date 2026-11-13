@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { createClient } from "../../lib/supabase/client";
+import ThemeToggle from "./theme-toggle";
 
 const links = [
   ["/", "Today"],
@@ -61,6 +62,7 @@ export default function SiteShell({ children }: { children: ReactNode }) {
         {scholarNumber && role === "student" && <Link className={pathname === "/my-complaints" ? "active" : ""} href="/my-complaints">My complaints</Link>}
         {role && role !== "student" && <Link className={pathname.startsWith("/portal") ? "active" : ""} href="/portal">Staff portal</Link>}
       </nav>
+      <ThemeToggle />
       <span className="profile"><span className="avatar">{(fullName ?? scholarNumber)?.charAt(0) ?? "S"}</span><span className="profile-name">{fullName ?? scholarNumber ?? "Student"}</span>{scholarNumber ? <button className="profile-action" type="button" onClick={signOut}>Sign out</button> : <Link className="profile-action" href="/login">Sign in</Link>}</span>
     </header>
     {children}
