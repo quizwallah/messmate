@@ -29,6 +29,7 @@ export default function LoginForm() {
   const [resendSeconds, setResendSeconds] = useState(0);
   const [step, setStep] = useState<"password" | "otp">("password");
   const [otpPurpose, setOtpPurpose] = useState<"first-login" | "reset">("first-login");
+  const [demoCodeMode, setDemoCodeMode] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const supabase = createClient();
@@ -84,7 +85,16 @@ export default function LoginForm() {
     setBusy(true);
     setNotice("");
     try {
-      if (process.env.NEXT_PUBLIC_MESSMATE_DEMO_LOGIN === "true") {
+      const prepared = await fetch("/api/auth/prepare-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scholarNumber: normalized }),
+      });
+      const result = await prepared.json();
+      if (!prepared.ok) throw new Error(result.error);
+
+      if (result.demoMode === true) {
+        setDemoCodeMode(true);
         setScholarNumber(normalized);
         setOtpPurpose(purpose);
         setCode("");
@@ -98,14 +108,6 @@ export default function LoginForm() {
         return;
       }
 
-      const prepared = await fetch("/api/auth/prepare-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scholarNumber: normalized }),
-      });
-      const result = await prepared.json();
-      if (!prepared.ok) throw new Error(result.error);
-
       const { error } = await supabase.auth.signInWithOtp({
         email: scholarEmail(normalized),
         options: { shouldCreateUser: false },
@@ -114,6 +116,7 @@ export default function LoginForm() {
 
       setScholarNumber(normalized);
       setOtpPurpose(purpose);
+      setDemoCodeMode(false);
       setCode("");
       setNewPassword("");
       setConfirmPassword("");
@@ -144,7 +147,7 @@ export default function LoginForm() {
     setBusy(true);
     setNotice("");
     try {
-      if (process.env.NEXT_PUBLIC_MESSMATE_DEMO_LOGIN === "true") {
+      if (demoCodeMode) {
         const response = await fetch("/api/auth/demo-otp", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -188,21 +191,21 @@ export default function LoginForm() {
 
   return <section className="login-card panel">
     <p className="eyebrow">STUDENT ACCESS</p>
-    <h2>{step === "password" ? "Sign in to MessMate" : otpPurpose === "reset" ? "Reset your password" : process.env.NEXT_PUBLIC_MESSMATE_DEMO_LOGIN === "true" ? "Enter the test code" : "Verify your college email"}</h2>
-    <p className="login-copy">Only students on the approved roster can sign in. Your college email is your scholar number followed by <strong>@stu.manit.ac.in</strong>. Your name and branch come from the approved student list.{process.env.NEXT_PUBLIC_MESSMATE_DEMO_LOGIN === "true" && <><br/><strong>Temporary testing is enabled:</strong> the test code is not emailed.</>}</p>
+    <h2>{step === "password" ? "Sign in to MessMate" : otpPurpose === "reset" ? "Reset your password" : demoCodeMode ? "Enter the test code" : "Verify your college email"}</h2>
+    <p className="login-copy">Only students on the approved roster can sign in. Your college email is your scholar number followed by <strong>@stu.manit.ac.in</strong>. Your name and branch come from the approved student list.{demoCodeMode && <><br/><strong>Temporary testing is enabled:</strong> the test code is not emailed.</>}</p>
 
     {step === "password" ? <form className="login-form" onSubmit={signIn}>
       <label>Scholar number<input autoComplete="username" value={scholarNumber} onChange={(event) => setScholarNumber(event.target.value)} placeholder="Enter your scholar number" required/></label>
       <label>Password<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" required/></label>
       <button className="button button-primary full-button" type="submit" disabled={busy}>{busy ? "Signing in…" : "Sign in"}<span>→</span></button>
-      <div className="login-secondary-actions"><button type="button" onClick={() => requestCode("first-login")} disabled={busy}>{process.env.NEXT_PUBLIC_MESSMATE_DEMO_LOGIN === "true" ? "First time? Use test code" : "First time? Verify your email"}</button><button type="button" onClick={() => requestCode("reset")} disabled={busy}>Forgot password?</button></div>
+      <div className="login-secondary-actions"><button type="button" onClick={() => requestCode("first-login")} disabled={busy}>First time? Verify your email</button><button type="button" onClick={() => requestCode("reset")} disabled={busy}>Forgot password?</button></div>
     </form> : <form className="login-form" onSubmit={verifyAndSetPassword}>
-      <label>Six-digit {process.env.NEXT_PUBLIC_MESSMATE_DEMO_LOGIN === "true" ? "test" : "email"} code<input autoComplete="one-time-code" inputMode="numeric" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} placeholder="Enter the code" required/></label>
+      <label>Six-digit {demoCodeMode ? "test" : "email"} code<input autoComplete="one-time-code" inputMode="numeric" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} placeholder="Enter the code" required/></label>
       <label>New password<input type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={8} pattern="(?=.*[A-Za-z])(?=.*[0-9]).{8,}" title="At least eight characters, including a letter and a number" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="8+ characters, with a letter and number" required/></label>
       <label>Confirm password<input type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={8} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Re-enter your password" required/></label>
       <label className="password-visibility"><input type="checkbox" checked={showPassword} onChange={(event) => setShowPassword(event.target.checked)}/>Show passwords</label>
       <button className="button button-primary full-button" type="submit" disabled={busy}>{busy ? "Verifying…" : "Verify code and set password"}<span>→</span></button>
-      <div className="login-secondary-actions"><button type="button" onClick={() => requestCode(otpPurpose)} disabled={busy || (process.env.NEXT_PUBLIC_MESSMATE_DEMO_LOGIN !== "true" && resendSeconds > 0)}>{process.env.NEXT_PUBLIC_MESSMATE_DEMO_LOGIN === "true" ? "Send a new test code" : resendSeconds > 0 ? `Resend email code in 00:${String(resendSeconds).padStart(2, "0")}` : "Send a new code"}</button><button type="button" onClick={() => { setStep("password"); setNotice(""); setResendSeconds(0); }} disabled={busy}>Back to sign in</button></div>
+      <div className="login-secondary-actions"><button type="button" onClick={() => requestCode(otpPurpose)} disabled={busy || (!demoCodeMode && resendSeconds > 0)}>{demoCodeMode ? "Send a new test code" : resendSeconds > 0 ? `Resend email code in 00:${String(resendSeconds).padStart(2, "0")}` : "Send a new code"}</button><button type="button" onClick={() => { setStep("password"); setNotice(""); setResendSeconds(0); setDemoCodeMode(false); }} disabled={busy}>Back to sign in</button></div>
     </form>}
     {notice && <p className="inline-notice" role="status">{notice}</p>}
   </section>;

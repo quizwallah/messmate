@@ -22,6 +22,16 @@ export async function POST(request: Request) {
 
     if (lookupError || !allowlistEntry?.is_active) return genericFailure();
 
+    const demoScholars = new Set(
+      (process.env.MESSMATE_DEMO_SCHOLARS ?? "")
+        .split(",")
+        .map((value) => normalizeScholarNumber(value))
+        .filter((value): value is string => Boolean(value)),
+    );
+    if (process.env.MESSMATE_DEMO_LOGIN === "true" && demoScholars.has(scholarNumber)) {
+      return NextResponse.json({ ready: true, demoMode: true });
+    }
+
     if (allowlistEntry.linked_auth_user_id) {
       const { data: profile, error: profileError } = await admin
         .from("profiles")

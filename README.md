@@ -42,7 +42,7 @@ on conflict (scholar_number) do update
 set display_name = excluded.display_name, is_active = true;
 ```
 
-The local `.env.local` enables the mode. On Vercel, enable the demo variables only in **Preview**, with the existing Supabase variables. Remove them and redeploy before real student use.
+Demo-code mode is selected by the server only for active scholar numbers listed in `MESSMATE_DEMO_SCHOLARS`. All other approved scholar numbers use college-email OTP, even when demo mode is enabled for those fake accounts. Keep the demo list limited to the fake IDs above. The demo variables are server-only; do not expose them through `NEXT_PUBLIC_` variables.
 
 Real student onboarding and password recovery still require a working SMTP sender. Never use the demo mode for real scholar numbers.
 
