@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { normalizeScholarNumber, scholarEmail } from "../../lib/auth/scholar";
@@ -26,11 +26,18 @@ export default function LoginForm() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(0);
   const [step, setStep] = useState<"password" | "otp">("password");
   const [otpPurpose, setOtpPurpose] = useState<"first-login" | "reset">("first-login");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const supabase = createClient();
+
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+    const timer = window.setTimeout(() => setResendSeconds((remaining) => Math.max(0, remaining - 1)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [resendSeconds]);
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -80,8 +87,14 @@ export default function LoginForm() {
       if (process.env.NEXT_PUBLIC_MESSMATE_DEMO_LOGIN === "true") {
         setScholarNumber(normalized);
         setOtpPurpose(purpose);
+        setCode("");
         setStep("otp");
         setNotice("Demo mode: enter the temporary test code shared by the site owner. No email will be sent.");
+        return;
+      }
+
+      if (resendSeconds > 0) {
+        setNotice(`Please wait ${resendSeconds} seconds before requesting another email code.`);
         return;
       }
 
@@ -101,6 +114,10 @@ export default function LoginForm() {
 
       setScholarNumber(normalized);
       setOtpPurpose(purpose);
+      setCode("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setResendSeconds(60);
       setStep("otp");
       setNotice(`A one-time code was sent to ${scholarEmail(normalized)}. Check your inbox and spam folder.`);
     } catch {
@@ -185,7 +202,7 @@ export default function LoginForm() {
       <label>Confirm password<input type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={8} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Re-enter your password" required/></label>
       <label className="password-visibility"><input type="checkbox" checked={showPassword} onChange={(event) => setShowPassword(event.target.checked)}/>Show passwords</label>
       <button className="button button-primary full-button" type="submit" disabled={busy}>{busy ? "Verifying…" : "Verify code and set password"}<span>→</span></button>
-      <div className="login-secondary-actions"><button type="button" onClick={() => requestCode(otpPurpose)} disabled={busy}>Send a new code</button><button type="button" onClick={() => { setStep("password"); setNotice(""); }} disabled={busy}>Back to sign in</button></div>
+      <div className="login-secondary-actions"><button type="button" onClick={() => requestCode(otpPurpose)} disabled={busy || (process.env.NEXT_PUBLIC_MESSMATE_DEMO_LOGIN !== "true" && resendSeconds > 0)}>{process.env.NEXT_PUBLIC_MESSMATE_DEMO_LOGIN === "true" ? "Send a new test code" : resendSeconds > 0 ? `Resend email code in 00:${String(resendSeconds).padStart(2, "0")}` : "Send a new code"}</button><button type="button" onClick={() => { setStep("password"); setNotice(""); setResendSeconds(0); }} disabled={busy}>Back to sign in</button></div>
     </form>}
     {notice && <p className="inline-notice" role="status">{notice}</p>}
   </section>;
