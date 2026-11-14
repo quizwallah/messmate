@@ -24,7 +24,8 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState<"password" | "otp">("password");
   const [otpPurpose, setOtpPurpose] = useState<"first-login" | "reset">("first-login");
   const [busy, setBusy] = useState(false);
@@ -53,6 +54,11 @@ export default function LoginForm() {
       if (profile.error || profile.data?.role !== "student" || !profile.data.is_active) {
         await supabase.auth.signOut();
         throw new Error("This account does not have student access. Use the Admin Portal sign-in.");
+      }
+      const { error: recordError } = await supabase.rpc("record_student_login");
+      if (recordError) {
+        await supabase.auth.signOut();
+        throw new Error("Could not verify your student account details. Contact the mess administrator.");
       }
       window.location.replace(safeNextPath(searchParams.get("next")));
     } catch (error) {
@@ -110,12 +116,12 @@ export default function LoginForm() {
       setNotice("Enter the six-digit code from your college email.");
       return;
     }
-    if (newPassword.length < 8) {
-      setNotice("Choose a password with at least eight characters.");
+    if (newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      setNotice("Choose a password with at least eight characters, including a letter and a number.");
       return;
     }
-    if (otpPurpose === "first-login" && fullName.trim().length < 2) {
-      setNotice("Enter your name as it should appear in the mess portal.");
+    if (newPassword !== confirmPassword) {
+      setNotice("The passwords do not match.");
       return;
     }
     setBusy(true);
@@ -134,15 +140,10 @@ export default function LoginForm() {
         const email = scholarEmail(scholarNumber);
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password: result.temporaryPassword });
         if (signInError) throw signInError;
-        if (otpPurpose === "first-login") {
-          const { data: userData } = await supabase.auth.getUser();
-          if (!userData.user) throw new Error("The demo account could not be loaded.");
-          const { error: profileError } = await supabase.from("profiles").update({ full_name: fullName.trim() }).eq("id", userData.user.id);
-          if (profileError) throw profileError;
-          await supabase.auth.updateUser({ data: { full_name: fullName.trim() } });
-        }
         const { error: passwordError } = await supabase.auth.updateUser({ password: newPassword });
         if (passwordError) throw passwordError;
+        const { error: recordError } = await supabase.rpc("record_student_login");
+        if (recordError) throw new Error("Could not save the verified student account. Apply the latest roster migration and retry.");
 
         window.location.replace(safeNextPath(searchParams.get("next")));
         return;
@@ -155,16 +156,10 @@ export default function LoginForm() {
       });
       if (verifyError) throw verifyError;
 
-      if (otpPurpose === "first-login") {
-        const { data: userData } = await supabase.auth.getUser();
-        if (!userData.user) throw new Error("The student account could not be loaded.");
-        const { error: profileError } = await supabase.from("profiles").update({ full_name: fullName.trim() }).eq("id", userData.user.id);
-        if (profileError) throw profileError;
-        await supabase.auth.updateUser({ data: { full_name: fullName.trim() } });
-      }
-
       const { error: passwordError } = await supabase.auth.updateUser({ password: newPassword });
       if (passwordError) throw passwordError;
+      const { error: recordError } = await supabase.rpc("record_student_login");
+      if (recordError) throw new Error("Could not save the verified student account. Apply the latest roster migration and retry.");
 
       window.location.replace(safeNextPath(searchParams.get("next")));
     } catch {
@@ -177,7 +172,7 @@ export default function LoginForm() {
   return <section className="login-card panel">
     <p className="eyebrow">STUDENT ACCESS</p>
     <h2>{step === "password" ? "Sign in to MessMate" : otpPurpose === "reset" ? "Reset your password" : process.env.NEXT_PUBLIC_MESSMATE_DEMO_LOGIN === "true" ? "Enter the test code" : "Verify your college email"}</h2>
-    <p className="login-copy">Use your scholar number as your username. Your college email is your scholar number followed by <strong>@stu.manit.ac.in</strong>.{process.env.NEXT_PUBLIC_MESSMATE_DEMO_LOGIN === "true" && <><br/><strong>Temporary testing is enabled:</strong> the test code is not emailed.</>}</p>
+    <p className="login-copy">Only students on the approved roster can sign in. Your college email is your scholar number followed by <strong>@stu.manit.ac.in</strong>. Your name and branch come from the approved student list.{process.env.NEXT_PUBLIC_MESSMATE_DEMO_LOGIN === "true" && <><br/><strong>Temporary testing is enabled:</strong> the test code is not emailed.</>}</p>
 
     {step === "password" ? <form className="login-form" onSubmit={signIn}>
       <label>Scholar number<input autoComplete="username" value={scholarNumber} onChange={(event) => setScholarNumber(event.target.value)} placeholder="Enter your scholar number" required/></label>
@@ -186,8 +181,9 @@ export default function LoginForm() {
       <div className="login-secondary-actions"><button type="button" onClick={() => requestCode("first-login")} disabled={busy}>{process.env.NEXT_PUBLIC_MESSMATE_DEMO_LOGIN === "true" ? "First time? Use test code" : "First time? Verify your email"}</button><button type="button" onClick={() => requestCode("reset")} disabled={busy}>Forgot password?</button></div>
     </form> : <form className="login-form" onSubmit={verifyAndSetPassword}>
       <label>Six-digit {process.env.NEXT_PUBLIC_MESSMATE_DEMO_LOGIN === "true" ? "test" : "email"} code<input autoComplete="one-time-code" inputMode="numeric" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} placeholder="Enter the code" required/></label>
-      {otpPurpose === "first-login" && <label>Full name<input autoComplete="name" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Enter your name" required/></label>}
-      <label>New password<input type="password" autoComplete="new-password" minLength={8} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="At least eight characters" required/></label>
+      <label>New password<input type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={8} pattern="(?=.*[A-Za-z])(?=.*[0-9]).{8,}" title="At least eight characters, including a letter and a number" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="8+ characters, with a letter and number" required/></label>
+      <label>Confirm password<input type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={8} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Re-enter your password" required/></label>
+      <label className="password-visibility"><input type="checkbox" checked={showPassword} onChange={(event) => setShowPassword(event.target.checked)}/>Show passwords</label>
       <button className="button button-primary full-button" type="submit" disabled={busy}>{busy ? "Verifying…" : "Verify code and set password"}<span>→</span></button>
       <div className="login-secondary-actions"><button type="button" onClick={() => requestCode(otpPurpose)} disabled={busy}>Send a new code</button><button type="button" onClick={() => { setStep("password"); setNotice(""); }} disabled={busy}>Back to sign in</button></div>
     </form>}

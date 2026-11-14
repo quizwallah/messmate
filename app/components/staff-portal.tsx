@@ -5,11 +5,12 @@ import type { FormEvent } from "react";
 import { createClient } from "../../lib/supabase/client";
 import AnnouncementComposer from "./announcement-composer";
 import AnnouncementAttachments from "./announcement-attachments";
+import { normalizeScholarNumber } from "../../lib/auth/scholar";
 
-type Row = { id: string; created_at?: string; student_id?: string; status?: string; full_name?: string | null; scholar_number?: string; is_active?: boolean; role?: string; subject?: string; category?: string; details?: string; rating?: number; comment?: string | null; block?: string; floor?: string; room_number?: string; meal_label?: string | null; starts_on?: string; ends_on?: string; reason?: string; title?: string; body?: string; posted_by_name?: string | null; posted_by_role?: string | null; related_meal_label?: string | null; [key: string]: any };
+type Row = { id: string; created_at?: string; student_id?: string; status?: string; full_name?: string | null; scholar_number?: string; branch?: string | null; verified_email?: string | null; first_login_at?: string | null; is_active?: boolean; role?: string; subject?: string; category?: string; details?: string; rating?: number; comment?: string | null; block?: string; floor?: string; room_number?: string; meal_label?: string | null; starts_on?: string; ends_on?: string; reason?: string; title?: string; body?: string; posted_by_name?: string | null; posted_by_role?: string | null; related_meal_label?: string | null; [key: string]: any };
 type PortalTab = "overview" | "mess" | "floor" | "feedback" | "absences" | "tokens" | "updates" | "students";
 type DateRange = "all" | "today" | "tomorrow" | "yesterday" | "last5" | "last10" | "last30" | "date";
-type Scholar = { scholar_number: string; display_name: string | null; is_active: boolean; linked_auth_user_id: string | null; created_at: string };
+type Scholar = { scholar_number: string; display_name: string | null; branch: string | null; is_active: boolean; linked_auth_user_id: string | null; created_at: string };
 
 const tabs: { id: PortalTab; label: string }[] = [
   { id: "overview", label: "Overview" }, { id: "mess", label: "Mess complaints" },
@@ -21,6 +22,45 @@ const localDate = (iso: string) => /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso : dateK
 const dateLabel = (iso: string) => new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(iso));
 const roleLabel = (role?: string | null) => ({ admin: "Admin", convenor: "Convenor", warden: "Warden", committee: "Committee", student: "Student" }[role ?? ""] ?? "Staff");
 
+function parseCsvLine(line: string): string[] | null {
+  const values: string[] = [];
+  let value = "";
+  let quoted = false;
+  for (let index = 0; index < line.length; index += 1) {
+    const character = line[index];
+    if (character === '"') {
+      if (quoted && line[index + 1] === '"') { value += '"'; index += 1; }
+      else quoted = !quoted;
+    } else if (character === "," && !quoted) {
+      values.push(value.trim()); value = "";
+    } else value += character;
+  }
+  if (quoted) return null;
+  values.push(value.trim());
+  return values;
+}
+
+function parseRosterText(text: string): { students?: { scholarNumber: string; name: string; branch: string }[]; error?: string } {
+  const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (!lines.length) return { error: "Choose a roster file or paste its rows first." };
+  const first = lines[0].toLowerCase();
+  const firstFields = first.includes("\t") ? first.split("\t").map((field) => field.trim()) : parseCsvLine(lines[0])?.map((field) => field.toLowerCase());
+  const scholarIndex = firstFields?.findIndex((field) => field.includes("scholar"));
+  const nameIndex = firstFields?.findIndex((field) => field.includes("name"));
+  const branchIndex = firstFields?.findIndex((field) => field.includes("branch"));
+  const hasHeader = scholarIndex !== undefined && scholarIndex >= 0 && nameIndex !== undefined && nameIndex >= 0 && branchIndex !== undefined && branchIndex >= 0;
+  const records = (hasHeader ? lines.slice(1) : lines).map((line) => {
+    const fields = line.includes("\t") ? line.split("\t").map((field) => field.trim()) : parseCsvLine(line);
+    if (!fields || fields.length !== 3) return null;
+    const indexes = hasHeader ? [scholarIndex as number, nameIndex as number, branchIndex as number] : [0, 1, 2];
+    return { scholarNumber: fields[indexes[0]], name: fields[indexes[1]], branch: fields[indexes[2]] };
+  });
+  if (!records.length || records.some((record) => !record)) {
+    return { error: "Use three columns in this order: scholar number, full name, branch. Remove page titles and group headings." };
+  }
+  return { students: records as { scholarNumber: string; name: string; branch: string }[] };
+}
+
 export default function StaffPortal() {
   const [role, setRole] = useState("");
   const [name, setName] = useState("");
@@ -31,6 +71,10 @@ export default function StaffPortal() {
   const [searchTerm, setSearchTerm] = useState("");
   const [rows, setRows] = useState({ profiles: [] as Row[], mess: [] as Row[], floor: [] as Row[], feedback: [] as Row[], absences: [] as Row[], tokens: [] as Row[], announcements: [] as Row[] });
   const [scholars, setScholars] = useState<Scholar[]>([]);
+  const [bulkScholarText, setBulkScholarText] = useState("");
+  const [bulkScholarFile, setBulkScholarFile] = useState("");
+  const [bulkImportBusy, setBulkImportBusy] = useState(false);
+  const [confirmRosterReplace, setConfirmRosterReplace] = useState(false);
   const [notice, setNotice] = useState("Loading staff data…");
   const [busyId, setBusyId] = useState("");
   const [publishNotice, setPublishNotice] = useState("");
@@ -49,7 +93,7 @@ export default function StaffPortal() {
     setRole(profile.role);
     setName(profile.full_name || "Staff member");
     const [profiles, mess, floor, feedback, absences, tokens, announcements] = await Promise.all([
-      supabase.from("profiles").select("id, scholar_number, full_name, role, is_active, created_at").order("scholar_number"),
+      supabase.from("profiles").select("id, scholar_number, full_name, branch, verified_email, first_login_at, role, is_active, created_at").order("scholar_number"),
       supabase.from("serious_complaints").select("id, student_id, subject, details, status, created_at, related_meal_label").order("created_at", { ascending: false }).limit(500),
       supabase.from("other_complaints").select("id, student_id, block, floor, room_number, category, details, status, created_at").order("created_at", { ascending: false }).limit(500),
       supabase.from("meal_feedback").select("id, student_id, meal_date, meal_label, rating, comment, created_at").order("created_at", { ascending: false }).limit(500),
@@ -148,12 +192,59 @@ export default function StaffPortal() {
     event.preventDefault();
     const form = event.currentTarget;
     const values = new FormData(form);
-    const response = await fetch("/api/admin/scholars", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scholarNumber: values.get("scholarNumber"), displayName: values.get("displayName") }) });
+    const response = await fetch("/api/admin/scholars", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scholarNumber: values.get("scholarNumber"), displayName: values.get("displayName"), branch: values.get("branch") }) });
     const result = await response.json();
     if (!response.ok) { setNotice(result.error || "Could not add scholar."); return; }
     form.reset();
     setNotice("Scholar added to the approved list. They can now verify their college email.");
     await load();
+  }
+
+  async function importScholarList(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!confirmRosterReplace) {
+      setNotice("Confirm that this file is the complete permitted student roster before replacing it.");
+      return;
+    }
+    const parsed = parseRosterText(bulkScholarText);
+    if (!parsed.students) { setNotice(parsed.error || "Check the roster format and try again."); return; }
+    if (parsed.students.length > 2500) { setNotice("Import up to 2,500 students at a time."); return; }
+    const normalized = parsed.students.map((student) => normalizeScholarNumber(student.scholarNumber));
+    if (normalized.some((value) => !value)) { setNotice("A roster row has an invalid scholar number. Check the file and try again."); return; }
+    if (!window.confirm(`Replace the permitted student roster with ${parsed.students.length} records? Students missing from the new list will lose login access, while their past records are kept. Admin and configured demo accounts are preserved.`)) return;
+    setBulkImportBusy(true);
+    setNotice("Replacing the approved student roster…");
+    try {
+      const response = await fetch("/api/admin/scholars", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ students: parsed.students }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Could not import the scholar list.");
+      setBulkScholarText("");
+      setBulkScholarFile("");
+      setConfirmRosterReplace(false);
+      await load();
+      setNotice(`Roster replaced: ${result.added} added, ${result.updated} updated, ${result.deactivated} removed from login access. Admin and demo accounts remain; old feedback and complaint history is retained.`);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Could not import the scholar list.");
+    } finally {
+      setBulkImportBusy(false);
+    }
+  }
+
+  async function loadRosterFile(file?: File) {
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith(".csv") || file.size > 1024 * 1024) {
+      setNotice("Choose a CSV file under 1 MB.");
+      setBulkScholarFile("");
+      return;
+    }
+    setBulkScholarText(await file.text());
+    setBulkScholarFile(file.name);
+    setConfirmRosterReplace(false);
+    setNotice("CSV loaded. Review the roster rows and confirm replacement before importing.");
   }
 
   async function setScholarActive(scholar: Scholar) {
@@ -175,6 +266,7 @@ export default function StaffPortal() {
   }
 
   const visibleTabs = tabs.filter((item) => (item.id !== "students" || isAdmin) && (item.id !== "mess" || isAdmin || role === "committee") && (item.id !== "updates" || role !== "committee"));
+  const rosterPreview = bulkScholarText.trim() ? parseRosterText(bulkScholarText) : null;
   const titleFor = (target: PortalTab) => tabs.find((item) => item.id === target)?.label ?? "Portal";
 
   return <div className="staff-portal"><section className="panel portal-welcome"><div><p className="eyebrow">MESSMATE STAFF PORTAL · {roleLabel(role).toUpperCase()}</p><h2>Welcome, {name}</h2><p>Review submissions, manage status and keep students informed.</p></div><button className="button button-outline" onClick={() => void load()} type="button">Refresh data</button></section>
@@ -187,7 +279,7 @@ export default function StaffPortal() {
     {tab === "absences" && <section className="portal-records"><h2>{titleFor(tab)}</h2>{selectedAbsences.map((item) => { const owner = profileMap.get(item.student_id ?? ""); return <article className="panel portal-record" key={item.id}><div className="complaint-list-top"><span className="status-pill">{item.reason}</span><time>{item.starts_on} – {item.ends_on}</time></div><div className="portal-record-person">{owner?.full_name || "Student"} · {owner?.scholar_number || "Scholar number unavailable"}</div></article>})}{selectedAbsences.length === 0 && <p className="empty-state">No break plans match these filters.</p>}</section>}
     {tab === "tokens" && <section className="portal-records"><h2>{titleFor(tab)}</h2>{selectedRows(rows.tokens).map((item) => { const owner = profileMap.get(item.student_id ?? ""); return <article className="panel portal-record" key={item.id}><div className="complaint-list-top"><span className="status-pill">{item.selected_choice || "Limited item"}</span><time>{item.issued_at ? dateLabel(item.issued_at) : ""}</time></div><div className="portal-record-person">{owner?.full_name || "Student"} · {owner?.scholar_number || "Scholar number unavailable"}</div><p>Offer: {item.offering_id} · Expires: {item.expires_at ? dateLabel(item.expires_at) : "—"}</p></article>})}{selectedRows(rows.tokens).length === 0 && <p className="empty-state">No tokens match these filters.</p>}</section>}
     {tab === "updates" && <div className="portal-updates-layout"><div className="portal-composer-column"><AnnouncementComposer onPublished={() => void load()}/>{publishNotice && <p className="inline-notice" role="status">{publishNotice}</p>}</div><section className="portal-records"><div className="updates-list-heading"><div><h2>Recent updates</h2><p>Published messages visible to students</p></div><span>{rows.announcements.length} total</span></div>{rows.announcements.map((item) => <article className="panel portal-record update-record" key={item.id}><div className="complaint-list-top"><span className="status-pill">{item.is_published ? "Published" : "Draft"}</span><time>{item.created_at ? dateLabel(item.created_at) : ""}</time></div>{editingUpdateId === item.id ? <div className="portal-form update-editor"><label>Title<input value={editingTitle} onChange={(event) => setEditingTitle(event.target.value)} maxLength={140} required/></label><label>Message<textarea value={editingBody} onChange={(event) => setEditingBody(event.target.value)} maxLength={4000} rows={4} required/></label><div className="update-actions"><button className="button button-primary" type="button" disabled={updateBusyId === item.id || !editingTitle.trim() || !editingBody.trim()} onClick={() => void saveAnnouncement(item.id)}>{updateBusyId === item.id ? "Saving…" : "Save changes"}</button><button className="button button-outline" type="button" onClick={() => setEditingUpdateId("")}>Cancel</button></div></div> : <><h3>{item.title}</h3><p>{item.body}</p><AnnouncementAttachments imagePath={item.image_path} audioPath={item.audio_path} pollQuestion={item.poll_question} pollOptions={item.poll_options} multiple={item.poll_allows_multiple}/></>}<small>By {item.posted_by_name || "Staff"} · {roleLabel(item.posted_by_role)}</small>{editingUpdateId !== item.id && <div className="update-actions"><button className="button button-outline" type="button" disabled={Boolean(updateBusyId)} onClick={() => { setEditingUpdateId(item.id); setEditingTitle(item.title || ""); setEditingBody(item.body || ""); }}>Edit</button><button className="button update-delete-button" type="button" disabled={Boolean(updateBusyId)} onClick={() => void deleteAnnouncement(item.id)}>{updateBusyId === item.id ? "Removing…" : "Remove update"}</button></div>}</article>)}{rows.announcements.length === 0 && <p className="empty-state">No updates have been published yet.</p>}</section></div>}
-    {tab === "students" && isAdmin && <section className="portal-records"><div className="section-heading"><div><p className="eyebrow">ADMIN ONLY</p><h2>Student accounts</h2></div></div><form className="panel portal-form add-scholar-form" onSubmit={addScholar}><h3>Add an approved scholar number</h3><label>Scholar number<input name="scholarNumber" required maxLength={32} placeholder="Scholar number"/></label><label>Student name<input name="displayName" required maxLength={120} placeholder="Full name"/></label><button className="button button-primary" type="submit">Add to approved list</button></form><div className="panel table-scroll"><table className="portal-table"><thead><tr><th>Scholar number</th><th>Name</th><th>Assign role</th><th>Access</th><th>Login</th><th>Actions</th></tr></thead><tbody>{scholars.filter((scholar) => `${scholar.scholar_number} ${scholar.display_name ?? ""}`.toLowerCase().includes(searchTerm.trim().toLowerCase())).map((scholar) => { const profile = rows.profiles.find((item) => item.id === scholar.linked_auth_user_id); return <tr key={scholar.scholar_number}><td>{scholar.scholar_number}</td><td>{profile?.full_name || scholar.display_name || "Pending first login"}</td><td>{!profile ? "Student" : profile.role === "admin" ? "Admin" : profile.role === "committee" ? "Committee" : <select aria-label={`Role for ${scholar.scholar_number}`} value={profile.role || "student"} disabled={busyId === scholar.scholar_number} onChange={(event) => void setScholarRole(scholar, event.target.value)}><option value="student">Student</option><option value="convenor">Convenor</option><option value="warden">Warden</option></select>}</td><td>{scholar.is_active ? "Active" : "Inactive"}</td><td>{profile ? "Linked" : "Not registered"}</td><td><button type="button" className="button button-outline" disabled={busyId === scholar.scholar_number || profile?.role === "admin"} onClick={() => void setScholarActive(scholar)}>{scholar.is_active ? "Deactivate" : "Reactivate"}</button></td></tr>})}</tbody></table></div><p className="section-copy">Add an approved scholar number first. After the student finishes onboarding, assign Convenor or Warden from the role menu. They keep using the same scholar-number username and password. The Admin role is managed separately and cannot be assigned here.</p></section>}
+    {tab === "students" && isAdmin && <section className="portal-records"><div className="section-heading"><div><p className="eyebrow">ADMIN ONLY</p><h2>Student accounts</h2></div></div><form className="panel portal-form add-scholar-form" onSubmit={addScholar}><h3>Add one approved student</h3><label>Scholar number<input name="scholarNumber" required maxLength={32} placeholder="Scholar number"/></label><label>Student name<input name="displayName" required maxLength={120} placeholder="Full name"/></label><label>Branch<input name="branch" required maxLength={120} placeholder="Academic branch"/></label><button className="button button-primary" type="submit">Add approved student</button></form><form className="panel portal-form bulk-scholar-import" onSubmit={importScholarList}><div><h3>Replace the permitted student roster</h3><p>Choose a CSV file or paste CSV/tab-separated rows. The importer reads the scholar number, name, and branch columns by their headers.</p></div><label className="roster-file-field">Choose CSV file<input type="file" accept=".csv,text/csv" onChange={(event) => void loadRosterFile(event.target.files?.[0])}/>{bulkScholarFile && <small>Loaded: {bulkScholarFile}</small>}</label><label>Roster rows<textarea value={bulkScholarText} onChange={(event) => setBulkScholarText(event.target.value)} rows={7} maxLength={80000} placeholder={'Name,Branch,ScholarNo\nStudent Name,Computer Science,22111001'} required/></label>{rosterPreview && (rosterPreview.students ? <small className="roster-preview-valid">Ready to import {rosterPreview.students.length} student records. Check them against your final list before replacing.</small> : <small className="roster-preview-error">{rosterPreview.error}</small>)}<label className="roster-replace-confirm"><input type="checkbox" checked={confirmRosterReplace} onChange={(event) => setConfirmRosterReplace(event.target.checked)}/><span>Replace the previous student roster. Students missing from this file will lose sign-in access. Their historical feedback and complaints will be retained. Admin and configured demo accounts are kept.</span></label><button className="button button-primary" type="submit" disabled={bulkImportBusy || !confirmRosterReplace || !rosterPreview?.students}>{bulkImportBusy ? "Replacing roster…" : "Replace approved roster"}</button><small>Up to 2,500 records. Identical duplicate rows are counted once. Do not include page titles or group headings.</small></form><div className="panel table-scroll"><table className="portal-table"><thead><tr><th>Scholar number</th><th>Name</th><th>Branch</th><th>Email verified</th><th>First login</th><th>Assign role</th><th>Access</th><th>Actions</th></tr></thead><tbody>{scholars.filter((scholar) => `${scholar.scholar_number} ${scholar.display_name ?? ""} ${scholar.branch ?? ""}`.toLowerCase().includes(searchTerm.trim().toLowerCase())).map((scholar) => { const profile = rows.profiles.find((item) => item.id === scholar.linked_auth_user_id); return <tr key={scholar.scholar_number}><td>{scholar.scholar_number}</td><td>{profile?.full_name || scholar.display_name || "Pending first login"}</td><td>{profile?.branch || scholar.branch || "—"}</td><td>{profile?.verified_email || "Not verified"}</td><td>{profile?.first_login_at ? dateLabel(profile.first_login_at) : "Not yet"}</td><td>{!profile ? "Student" : profile.role === "admin" ? "Admin" : profile.role === "committee" ? "Committee" : <select aria-label={`Role for ${scholar.scholar_number}`} value={profile.role || "student"} disabled={busyId === scholar.scholar_number} onChange={(event) => void setScholarRole(scholar, event.target.value)}><option value="student">Student</option><option value="convenor">Convenor</option><option value="warden">Warden</option></select>}</td><td>{scholar.is_active ? "Active" : "Inactive"}</td><td><button type="button" className="button button-outline" disabled={busyId === scholar.scholar_number || profile?.role === "admin"} onClick={() => void setScholarActive(scholar)}>{scholar.is_active ? "Deactivate" : "Reactivate"}</button></td></tr>})}</tbody></table></div><p className="section-copy">Name and branch come from the roster. Email and first-login time are recorded only after the student verifies the college email. Removed students lose portal access while their historic records remain. The admin account is managed separately.</p></section>}
     {notice && <p className="inline-notice" role="status">{notice}</p>}
   </div>;
 }

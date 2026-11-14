@@ -45,6 +45,20 @@
 .portal-form .section-copy{font-size:10px;line-height:1.5;color:#7b8478}
 .add-scholar-form{grid-template-columns:1fr 1fr auto;align-items:end;padding:17px;border:1px solid #e7eae4}
 .add-scholar-form h3{grid-column:1/-1;margin:0;font:700 13px Manrope,Arial,sans-serif}
+.bulk-scholar-import{padding:18px;border:1px solid #e7eae4;background:linear-gradient(135deg,#fff 35%,#f6f9f2 100%)}
+.bulk-scholar-import h3{margin:0;color:#303a2e;font:700 14px Manrope,Arial,sans-serif}
+.bulk-scholar-import>div>p{margin:5px 0 0;color:#798374;font-size:10px;line-height:1.55}
+.bulk-scholar-import label{margin-top:2px}
+.bulk-scholar-import textarea{min-height:112px;font:500 11px/1.7 ui-monospace,Consolas,monospace}
+.bulk-scholar-import .button{justify-self:start}
+.bulk-scholar-import>small{color:#858d80;font-size:9px;line-height:1.5}
+.bulk-scholar-import .roster-file-field{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:12px;border:1px dashed #d8e1d2;border-radius:10px;background:#fbfcfa}
+.bulk-scholar-import .roster-file-field input{max-width:100%;min-height:36px;padding:5px;background:transparent;font-size:10px}
+.bulk-scholar-import .roster-file-field small{color:#76826f;font-weight:500}
+.bulk-scholar-import .roster-replace-confirm{display:flex;align-items:flex-start;gap:9px;padding:12px;border:1px solid #e7e9df;border-radius:9px;background:#fbfbf8;font-weight:500;line-height:1.55}
+.bulk-scholar-import .roster-replace-confirm input{width:16px;height:16px;flex:0 0 16px;margin:1px 0 0;accent-color:#557b4c}
+.bulk-scholar-import .roster-preview-valid{color:#557b4c;font-weight:700}
+.bulk-scholar-import .roster-preview-error{color:#a34c43;font-weight:700}
 .portal-table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:10px}
 .portal-table th{text-align:left;padding:11px 12px;background:#f3f6f0;color:#65705f;font-size:9px;letter-spacing:.3px}
 .portal-table td{padding:11px 12px;border-top:1px solid #edf0ea;color:#515b4f}

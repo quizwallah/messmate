@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
     const { data: allowlistEntry, error: lookupError } = await admin
       .from("scholar_allowlist")
-      .select("scholar_number, is_active, linked_auth_user_id")
+      .select("scholar_number, display_name, branch, is_active, linked_auth_user_id")
       .eq("scholar_number", scholarNumber)
       .maybeSingle();
     if (lookupError || !allowlistEntry?.is_active) return failure("This demo account is not active.", 403);
@@ -51,6 +51,10 @@ export async function POST(request: Request) {
       const { error: profileError } = await admin.from("profiles").insert({
         id: userId,
         scholar_number: scholarNumber,
+        full_name: allowlistEntry.display_name,
+        branch: allowlistEntry.branch,
+        verified_email: scholarEmail(scholarNumber),
+        first_login_at: new Date().toISOString(),
         role: "student",
         is_active: true,
       });
