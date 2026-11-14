@@ -46,5 +46,6 @@
 :root[data-theme="dark"] .bulk-scholar-import{background:linear-gradient(135deg,#1b231c 35%,#202920 100%);border-color:#354036}
 :root[data-theme="dark"] .bulk-scholar-import h3{color:#edf2e9}
 :root[data-theme="dark"] .bulk-scholar-import>div>p,:root[data-theme="dark"] .bulk-scholar-import>small{color:#a5b09f}
+:root[data-theme="dark"] .scholar-count-badge{border-color:#40503d;background:#273427;color:#d2e3c7}
 :root[data-theme="dark"] .admin-entry-link{border-color:#40503d;background:#273427;color:#d2e3c7}
 :root[data-theme="dark"] .admin-entry-link:hover{border-color:#61785b;background:#30402f}

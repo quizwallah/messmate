@@ -41,9 +41,20 @@ function validateRoster(input: unknown): { rows?: RosterEntry[]; duplicates?: nu
 export async function GET() {
   if (!await isAdmin()) return NextResponse.json({ error: "Admin access required." }, { status: 403 });
   const admin = createAdminClient();
-  const { data, error } = await admin.from("scholar_allowlist").select("scholar_number, display_name, branch, is_active, linked_auth_user_id, created_at").order("scholar_number");
-  if (error) return NextResponse.json({ error: "Could not load the approved scholar list." }, { status: 500 });
-  return NextResponse.json({ scholars: data ?? [] });
+  const scholars: { scholar_number: string; display_name: string | null; branch: string | null; is_active: boolean; linked_auth_user_id: string | null; created_at: string }[] = [];
+  const pageSize = 500;
+  let totalCount = 0;
+  for (let offset = 0; offset < 1200; offset += pageSize) {
+    const { data, error, count } = await admin.from("scholar_allowlist")
+      .select("scholar_number, display_name, branch, is_active, linked_auth_user_id, created_at", { count: "exact" })
+      .order("scholar_number")
+      .range(offset, Math.min(offset + pageSize - 1, 1199));
+    if (error) return NextResponse.json({ error: "Could not load the approved scholar list." }, { status: 500 });
+    if (offset === 0) totalCount = count ?? data?.length ?? 0;
+    scholars.push(...(data ?? []));
+    if ((data?.length ?? 0) < pageSize) break;
+  }
+  return NextResponse.json({ scholars, count: totalCount || scholars.length, maximum: 1200, truncated: totalCount > scholars.length });
 }
 
 export async function POST(request: Request) {
@@ -93,12 +104,26 @@ export async function PUT(request: Request) {
     }
 
     const admin = createAdminClient();
-    const { data: current, error: currentError } = await admin.from("scholar_allowlist").select("scholar_number, linked_auth_user_id, is_active").limit(10000);
-    if (currentError) return NextResponse.json({ error: "Could not read the current roster. No changes were made." }, { status: 500 });
-    const existing = (current ?? []) as ExistingScholar[];
-    const { data: profiles, error: profilesError } = await admin.from("profiles").select("id, role").limit(10000);
-    if (profilesError) return NextResponse.json({ error: "Could not verify protected admin accounts. No changes were made." }, { status: 500 });
-    const roleById = new Map((profiles ?? []).map((profile) => [profile.id, profile.role]));
+    const existing: ExistingScholar[] = [];
+    const pageSize = 500;
+    for (let offset = 0; offset < 1200; offset += pageSize) {
+      const { data, error, count } = await admin.from("scholar_allowlist")
+        .select("scholar_number, linked_auth_user_id, is_active", { count: "exact" })
+        .order("scholar_number")
+        .range(offset, Math.min(offset + pageSize - 1, 1199));
+      if (error) return NextResponse.json({ error: "Could not read the current roster. No changes were made." }, { status: 500 });
+      if (count !== null && count > 1200) return NextResponse.json({ error: "The current roster exceeds the supported 1,200 records. No changes were made." }, { status: 409 });
+      existing.push(...((data ?? []) as ExistingScholar[]));
+      if ((data?.length ?? 0) < pageSize) break;
+    }
+    const roleById = new Map<string, string>();
+    const linkedIds = existing.map((row) => row.linked_auth_user_id).filter((id): id is string => Boolean(id));
+    for (let offset = 0; offset < linkedIds.length; offset += 250) {
+      const batchIds = linkedIds.slice(offset, offset + 250);
+      const { data: profiles, error: profilesError } = await admin.from("profiles").select("id, role").in("id", batchIds);
+      if (profilesError) return NextResponse.json({ error: "Could not verify protected admin accounts. No changes were made." }, { status: 500 });
+      for (const profile of profiles ?? []) roleById.set(profile.id, profile.role);
+    }
     const rosterNumbers = new Set(validated.rows.map((row) => row.scholar_number));
 
     const upserted: { scholar_number: string; linked_auth_user_id: string | null }[] = [];
