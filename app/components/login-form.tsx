@@ -27,7 +27,7 @@ export default function LoginForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
-  const [step, setStep] = useState<"password" | "otp">("password");
+  const [step, setStep] = useState<"password" | "scholar" | "otp">("password");
   const [otpPurpose, setOtpPurpose] = useState<"first-login" | "reset">("first-login");
   const [demoCodeMode, setDemoCodeMode] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -91,7 +91,9 @@ export default function LoginForm() {
         body: JSON.stringify({ scholarNumber: normalized }),
       });
       const result = await prepared.json();
-      if (!prepared.ok) throw new Error(result.error);
+      if (!prepared.ok || result.ready !== true) {
+        throw new Error("We could not prepare email verification. Check the scholar number or contact the mess convenor.");
+      }
 
       if (result.demoMode === true) {
         setDemoCodeMode(true);
@@ -123,8 +125,8 @@ export default function LoginForm() {
       setResendSeconds(60);
       setStep("otp");
       setNotice(`A one-time code was sent to ${scholarEmail(normalized)}. Check your inbox and spam folder.`);
-    } catch {
-      setNotice("We could not send a code. Check your scholar number or contact the mess convenor.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "We could not send a code. Please try again or contact the mess convenor.");
     } finally {
       setBusy(false);
     }
@@ -191,14 +193,18 @@ export default function LoginForm() {
 
   return <section className="login-card panel">
     <p className="eyebrow">STUDENT ACCESS</p>
-    <h2>{step === "password" ? "Sign in to MessMate" : otpPurpose === "reset" ? "Reset your password" : demoCodeMode ? "Enter the test code" : "Verify your college email"}</h2>
+    <h2>{step === "password" ? "Sign in to MessMate" : step === "scholar" ? otpPurpose === "reset" ? "Reset your password" : "Verify your college email" : otpPurpose === "reset" ? "Reset your password" : demoCodeMode ? "Enter the test code" : "Verify your college email"}</h2>
     <p className="login-copy">Only students on the approved roster can sign in. Your college email is your scholar number followed by <strong>@stu.manit.ac.in</strong>. Your name and branch come from the approved student list.{demoCodeMode && <><br/><strong>Temporary testing is enabled:</strong> the test code is not emailed.</>}</p>
 
     {step === "password" ? <form className="login-form" onSubmit={signIn}>
       <label>Scholar number<input autoComplete="username" value={scholarNumber} onChange={(event) => setScholarNumber(event.target.value)} placeholder="Enter your scholar number" required/></label>
       <label>Password<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" required/></label>
       <button className="button button-primary full-button" type="submit" disabled={busy}>{busy ? "Signing in…" : "Sign in"}<span>→</span></button>
-      <div className="login-secondary-actions"><button type="button" onClick={() => requestCode("first-login")} disabled={busy}>First time? Verify your email</button><button type="button" onClick={() => requestCode("reset")} disabled={busy}>Forgot password?</button></div>
+      <div className="login-secondary-actions"><button type="button" onClick={() => { setOtpPurpose("first-login"); setScholarNumber(""); setNotice(""); setStep("scholar"); }} disabled={busy}>First time? Verify your email</button><button type="button" onClick={() => { setOtpPurpose("reset"); setScholarNumber(""); setNotice(""); setStep("scholar"); }} disabled={busy}>Forgot password?</button></div>
+    </form> : step === "scholar" ? <form className="login-form" onSubmit={(event) => { event.preventDefault(); void requestCode(otpPurpose); }}>
+      <label>Scholar number<input autoComplete="username" value={scholarNumber} onChange={(event) => setScholarNumber(event.target.value)} placeholder="Enter your scholar number" required/></label>
+      <button className="button button-primary full-button" type="submit" disabled={busy}>{busy ? "Preparing verification…" : "Send verification code"}<span>→</span></button>
+      <div className="login-secondary-actions"><button type="button" onClick={() => { setStep("password"); setNotice(""); }} disabled={busy}>Back to sign in</button></div>
     </form> : <form className="login-form" onSubmit={verifyAndSetPassword}>
       <label>Six-digit {demoCodeMode ? "test" : "email"} code<input autoComplete="one-time-code" inputMode="numeric" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} placeholder="Enter the code" required/></label>
       <label>New password<input type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={8} pattern="(?=.*[A-Za-z])(?=.*[0-9]).{8,}" title="At least eight characters, including a letter and a number" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="8+ characters, with a letter and number" required/></label>
