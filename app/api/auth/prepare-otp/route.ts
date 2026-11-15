@@ -16,14 +16,22 @@ export async function POST(request: Request) {
 
     failureStage = "allowlist";
     const admin = createAdminClient();
-    const { data: allowlistEntry, error: lookupError } = await admin
-      .from("scholar_allowlist")
-      .select("scholar_number, display_name, branch, is_active, linked_auth_user_id")
-      .eq("scholar_number", scholarNumber)
-      .maybeSingle();
+    const [allowlistResult, profileResult] = await Promise.all([
+      admin.from("scholar_allowlist")
+        .select("scholar_number, display_name, branch, is_active, linked_auth_user_id")
+        .eq("scholar_number", scholarNumber)
+        .maybeSingle(),
+      admin.from("profiles")
+        .select("id, is_active, role")
+        .eq("scholar_number", scholarNumber)
+        .maybeSingle(),
+    ]);
+    const { data: allowlistEntry, error: lookupError } = allowlistResult;
+    const { data: linkedProfile, error: profileLookupError } = profileResult;
 
-    if (lookupError || !allowlistEntry?.is_active) {
+    if (lookupError || profileLookupError || !allowlistEntry?.is_active) {
       if (lookupError) console.error("[auth/prepare-otp] allowlist lookup failed:", lookupError.code ?? "unknown");
+      if (profileLookupError) console.error("[auth/prepare-otp] profile lookup failed:", profileLookupError.code ?? "unknown");
       return genericFailure();
     }
 
@@ -38,19 +46,14 @@ export async function POST(request: Request) {
     }
 
     if (allowlistEntry.linked_auth_user_id) {
-      const { data: profile, error: profileError } = await admin
-        .from("profiles")
-        .select("is_active, role")
-        .eq("id", allowlistEntry.linked_auth_user_id)
-        .maybeSingle();
-      if (profileError || !profile?.is_active || profile.role !== "student") {
-        if (profileError) console.error("[auth/prepare-otp] linked profile lookup failed:", profileError.code ?? "unknown");
+      if (!linkedProfile || linkedProfile.id !== allowlistEntry.linked_auth_user_id || !linkedProfile.is_active || linkedProfile.role !== "student") {
         return genericFailure();
       }
       // Roster changes already sync profiles through the admin roster flow. Avoid a
       // redundant write here so repeat code requests can reach Auth sooner.
       return NextResponse.json({ ready: true });
     }
+    if (linkedProfile) return genericFailure();
 
     failureStage = "create-account";
     const email = scholarEmail(scholarNumber);
@@ -66,33 +69,13 @@ export async function POST(request: Request) {
 
     const userId = created.user.id;
     failureStage = "create-profile";
-    const { error: profileError } = await admin.from("profiles").insert({
-      id: userId,
-      scholar_number: scholarNumber,
-      full_name: allowlistEntry.display_name,
-      branch: allowlistEntry.branch,
-      role: "student",
-      is_active: true,
+    const { data: linked, error: linkError } = await admin.rpc("link_approved_student", {
+      p_scholar_number: scholarNumber,
+      p_user_id: userId,
     });
-    if (profileError) {
-      console.error("[auth/prepare-otp] profile creation failed:", profileError.code ?? "unknown");
-      await admin.auth.admin.deleteUser(userId);
-      return genericFailure();
-    }
 
-    failureStage = "link-account";
-    const { data: linked, error: linkError } = await admin
-      .from("scholar_allowlist")
-      .update({ linked_auth_user_id: userId })
-      .eq("scholar_number", scholarNumber)
-      .eq("is_active", true)
-      .is("linked_auth_user_id", null)
-      .select("scholar_number")
-      .maybeSingle();
-
-    if (linkError || !linked) {
+    if (linkError || linked !== true) {
       if (linkError) console.error("[auth/prepare-otp] account linking failed:", linkError.code ?? "unknown");
-      await admin.from("profiles").delete().eq("id", userId);
       await admin.auth.admin.deleteUser(userId);
       return genericFailure();
     }
