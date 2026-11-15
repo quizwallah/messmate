@@ -22,6 +22,13 @@ const tabs: { id: PortalTab; label: string }[] = [
 const dateKey = (date: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
 const localDate = (iso: string) => /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso : dateKey(new Date(iso));
 const dateLabel = (iso: string) => new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(iso));
+const formatCooldown = (seconds: number) => `${String(Math.floor(seconds / 3600)).padStart(2, "0")}:${String(Math.floor((seconds % 3600) / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+const parseCooldown = (value: string) => {
+  const match = /^(\d{2,3}):([0-5]\d):([0-5]\d)$/.exec(value);
+  if (!match) return null;
+  const seconds = Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3]);
+  return seconds >= 1 && seconds <= 604800 ? seconds : null;
+};
 const roleLabel = (role?: string | null) => ({ admin: "Admin", convenor: "Convenor", warden: "Warden", committee: "Committee", student: "Student" }[role ?? ""] ?? "Staff");
 
 function parseCsvLine(line: string): string[] | null {
@@ -82,8 +89,8 @@ export default function StaffPortal() {
   const [confirmRosterReplace, setConfirmRosterReplace] = useState(false);
   const [notice, setNotice] = useState("Loading staff data…");
   const [busyId, setBusyId] = useState("");
-  const [mealChoiceCooldown, setMealChoiceCooldown] = useState(30);
-  const [sweetCooldown, setSweetCooldown] = useState(30);
+  const [mealChoiceCooldown, setMealChoiceCooldown] = useState("03:00:00");
+  const [sweetCooldown, setSweetCooldown] = useState("03:00:00");
   const [cooldownBusy, setCooldownBusy] = useState(false);
   const [activeCooldowns, setActiveCooldowns] = useState<ActiveCooldown[]>([]);
   const [resetTarget, setResetTarget] = useState<ActiveCooldown | null>(null);
@@ -139,8 +146,8 @@ export default function StaffPortal() {
       const cooldownResponse = await fetch("/api/admin/token-cooldowns", { cache: "no-store" });
       const cooldownResult = await cooldownResponse.json();
       if (cooldownResponse.ok) {
-        setMealChoiceCooldown(cooldownResult.settings?.meal_choice ?? 30);
-        setSweetCooldown(cooldownResult.settings?.limited_item ?? 30);
+        setMealChoiceCooldown(formatCooldown(cooldownResult.settings?.meal_choice ?? 10800));
+        setSweetCooldown(formatCooldown(cooldownResult.settings?.limited_item ?? 10800));
       }
       const response = await fetch("/api/admin/scholars", { cache: "no-store" });
       const result = await response.json();
@@ -326,12 +333,18 @@ export default function StaffPortal() {
 
   async function saveTokenCooldowns(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const mealChoiceSeconds = parseCooldown(mealChoiceCooldown);
+    const limitedItemSeconds = parseCooldown(sweetCooldown);
+    if (mealChoiceSeconds === null || limitedItemSeconds === null) {
+      setNotice("Enter both cooldowns as HH:MM:SS, from 00:00:01 to 168:00:00.");
+      return;
+    }
     setCooldownBusy(true);
     try {
       const response = await fetch("/api/admin/token-cooldowns", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mealChoiceSeconds: mealChoiceCooldown, limitedItemSeconds: sweetCooldown }),
+        body: JSON.stringify({ mealChoiceSeconds, limitedItemSeconds }),
       });
       const result = await response.json();
       setNotice(response.ok ? "Token cooldowns saved. New tokens will use these times." : result.error || "Could not save token cooldowns.");
@@ -382,7 +395,7 @@ export default function StaffPortal() {
     {tab === "feedback" && <section className="portal-records"><h2>{titleFor(tab)}</h2>{selectedRows(rows.feedback).map((item) => { const owner = profileMap.get(item.student_id ?? ""); return <article className="panel portal-record" key={item.id}><div className="complaint-list-top"><span className="status-pill">{item.rating} / 5 stars · {item.meal_label}</span><time>{item.created_at ? dateLabel(item.created_at) : ""}</time></div><div className="portal-record-person">{owner?.full_name || "Student"} · {owner?.scholar_number || "Scholar number unavailable"}</div><p>{item.comment || "Rating only; no written comment."}</p></article>})}{selectedRows(rows.feedback).length === 0 && <p className="empty-state">No feedback matches these filters.</p>}</section>}
     {tab === "absences" && <section className="portal-records"><h2>{titleFor(tab)}</h2>{selectedAbsences.map((item) => { const owner = profileMap.get(item.student_id ?? ""); return <article className="panel portal-record" key={item.id}><div className="complaint-list-top"><span className="status-pill">{item.reason}</span><time>{item.starts_on} – {item.ends_on}</time></div><div className="portal-record-person">{owner?.full_name || "Student"} · {owner?.scholar_number || "Scholar number unavailable"}</div></article>})}{selectedAbsences.length === 0 && <p className="empty-state">No break plans match these filters.</p>}</section>}
     {tab === "tokens" && <section className="portal-records"><h2>{titleFor(tab)}</h2>{isAdmin && <>
-      <form className="panel portal-form token-cooldown-settings" onSubmit={saveTokenCooldowns}><div><p className="eyebrow">ADMIN SETTINGS</p><h3>Token cooldowns</h3><p>Set how long a student must wait before generating another token. Meal cooldown applies to both Veg and Non-Veg; Sweet cooldown is separate. Times apply to newly generated tokens.</p></div><label>Veg / Non-Veg cooldown (seconds)<input type="number" min="1" max="604800" step="1" value={mealChoiceCooldown} onChange={(event) => setMealChoiceCooldown(Number(event.target.value))} required/></label><label>Sweet cooldown (seconds)<input type="number" min="1" max="604800" step="1" value={sweetCooldown} onChange={(event) => setSweetCooldown(Number(event.target.value))} required/></label><button className="button button-primary" type="submit" disabled={cooldownBusy}>{cooldownBusy ? "Saving…" : "Save cooldowns"}</button><small>Enter 1–604,800 seconds. Changing a duration does not alter an active timer; use Reset access below when needed.</small></form>
+      <form className="panel portal-form token-cooldown-settings" onSubmit={saveTokenCooldowns}><div><p className="eyebrow">ADMIN SETTINGS</p><h3>Token cooldowns</h3><p>Both cooldowns default to three hours. Meal cooldown applies to Veg and Non-Veg; Sweet cooldown is separate. Changes apply to new tokens.</p></div><label>Veg / Non-Veg cooldown (HH:MM:SS)<input type="text" inputMode="numeric" maxLength={9} pattern="\d{2,3}:[0-5]\d:[0-5]\d" placeholder="03:00:00" value={mealChoiceCooldown} onChange={(event) => setMealChoiceCooldown(event.target.value)} required/></label><label>Sweet cooldown (HH:MM:SS)<input type="text" inputMode="numeric" maxLength={9} pattern="\d{2,3}:[0-5]\d:[0-5]\d" placeholder="03:00:00" value={sweetCooldown} onChange={(event) => setSweetCooldown(event.target.value)} required/></label><button className="button button-primary" type="submit" disabled={cooldownBusy}>{cooldownBusy ? "Saving…" : "Save cooldowns"}</button><small>Use HH:MM:SS, from 00:00:01 to 168:00:00. Existing active timers stay in place; use Reset access below to clear one.</small></form>
       <section className="active-cooldowns"><div className="section-heading"><div><p className="eyebrow">ADMIN ONLY</p><h3>Students with active cooldowns</h3></div><span className="scholar-count-badge">{activeCooldowns.filter((item) => Date.parse(item.cooldownUntil) > clockNow).length} active</span></div>
         {activeCooldowns.filter((item) => Date.parse(item.cooldownUntil) > clockNow && `${item.scholarNumber} ${item.fullName ?? ""} ${item.label} ${item.choice ?? ""}`.toLowerCase().includes(searchTerm.trim().toLowerCase())).map((item) => {
           const remaining = Math.max(0, Date.parse(item.cooldownUntil) - clockNow);
