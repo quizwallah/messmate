@@ -8,3 +8,116 @@
 .admin-entry-link{flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;min-height:39px;padding:0 13px;border:1px solid #d7e2d1;border-radius:10px;background:#f2f6ef;color:#42653c;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;transition:background .16s,border-color .16s,transform .16s}.admin-entry-link:hover{transform:translateY(-1px);border-color:#b8cdae;background:#eaf2e5}.admin-entry-icon{font-size:14px}.admin-entry-link b{font-size:14px;font-weight:500}
 @media(max-width:680px){.topbar .admin-entry-link{order:3;flex-basis:100%;justify-content:center;min-height:36px;margin:0 0 8px}.topbar nav{order:4}}
 .login-form .password-visibility{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:500;color:#737c70}.login-form .password-visibility input{width:15px;min-height:15px;margin:0;accent-color:#537b49}
+
+.today-schedule{margin-top:9px!important;color:#66745f!important;font-size:13px!important}
+.login-first-time-callout{display:grid;gap:13px;margin:0 0 16px;padding:17px;border:1px solid #d8e4d2;border-radius:13px;background:linear-gradient(135deg,#f3f8ef,#fff)}
+.login-first-time-callout>div strong,.login-first-time-callout>div span{display:block}
+.login-first-time-callout>div strong{font-size:14px;color:#344531}
+.login-first-time-callout>div span{margin-top:4px;font-size:12px;line-height:1.5;color:#727b6d}
+.login-first-time-callout>button{display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:11px 14px;border:0;border-radius:9px;background:#52764b;color:#fff;font:700 13px "DM Sans",Arial,sans-serif;cursor:pointer}
+.login-first-time-callout>button:disabled{opacity:.65;cursor:wait}
+.login-divider{margin:0 0 15px;text-align:center;color:#848b80;font-size:11px}
+.floor-complaint-card{margin-top:16px}
+.floor-complaint-card .section-copy{max-width:440px}
+.weekly-menu-mobile{display:none}
+
+@media(max-width:680px){
+  .page-main{padding:24px 0 34px;margin:0 14px}
+  .page-heading{margin-bottom:20px}
+  .page-heading h1,.page-heading h1 em{font-size:34px;line-height:1.12}
+  .page-heading>p:last-child{font-size:14px;line-height:1.6}
+  .today-schedule{font-size:13px!important;line-height:1.55!important}
+  .today-layout .menu-panel{padding:21px 17px 17px}
+  .today-layout .section-heading h2{font-size:21px}
+  .today-layout .meal-row{grid-template-columns:94px minmax(0,1fr) 34px;gap:9px;padding:14px 0}
+  .meal-time span{font-size:11px;letter-spacing:.6px}
+  .meal-time small{font-size:11px;line-height:1.35}
+  .meal-info strong{font-size:15px}
+  .today-layout .meal-info>span{font-size:13px;line-height:1.55}
+  .meal-icon{width:34px;height:34px}
+  .menu-note{font-size:12px;line-height:1.5}
+  .feature-link{min-height:76px;padding:15px;gap:13px}
+  .feature-link strong{font-size:14px}
+  .feature-link small{font-size:12px;line-height:1.4}
+  .feature-icon{width:40px;height:40px;flex:0 0 40px}
+  .home-note{padding:16px}
+  .home-note strong{font-size:14px}
+  .home-note p{font-size:12px;line-height:1.5}
+  .home-note .text-link{font-size:12px;min-height:40px;display:flex;align-items:center}
+  .home-action-links .feature-link strong{font-size:14px}
+  .home-action-links .feature-link small{font-size:12px}
+  .login-page-main{max-width:100%}
+  .login-card{max-width:none;padding:22px 18px;border-radius:16px}
+  .login-card h2{font-size:25px}
+  .login-copy{font-size:14px;line-height:1.6;margin-bottom:16px}
+  .login-first-time-callout{padding:16px;gap:12px}
+  .login-first-time-callout>div strong{font-size:15px}
+  .login-first-time-callout>div span{font-size:13px}
+  .login-first-time-callout>button{min-height:52px;font-size:14px}
+  .login-divider{font-size:13px}
+  .login-form{gap:16px}
+  .login-form label{font-size:14px;gap:8px}
+  .login-form input{min-height:52px;padding:12px;font-size:16px}
+  .login-form .button{min-height:52px;font-size:15px}
+  .login-secondary-actions{align-items:center;flex-wrap:wrap}
+  .login-secondary-actions button{min-height:44px;font-size:13px}
+  .feedback-page-layout{max-width:none}
+  .feedback-page-layout .feedback-page-card,.complaint-page-card{padding:21px 18px;gap:18px;border-radius:16px}
+  .feedback-intro h2{font-size:27px;line-height:1.2}
+  .feedback-intro>p:not(.eyebrow){font-size:14px;line-height:1.55}
+  .feedback-form>label,.complaint-form label{font-size:14px}
+  .stars{gap:9px;margin:8px 0 15px}
+  .stars button{font-size:32px;padding:2px 4px}
+  input,select,textarea{min-height:50px;padding:12px;font-size:16px}
+  .feedback-form textarea,.complaint-form textarea{min-height:112px;line-height:1.5}
+  .feedback-form .button,.complaint-form .button{min-height:52px;font-size:14px}
+  .complaint-page-card h2{font-size:24px}
+  .complaint-page-card>div>p:last-child{font-size:14px;line-height:1.6}
+  .inline-notice{font-size:13px;line-height:1.5;padding:12px}
+  .topbar nav{gap:15px;height:46px}
+  .topbar nav a{height:46px;font-size:12px}
+  .topbar .admin-entry-link{min-height:42px;font-size:12px}
+  .profile-action{font-size:12px}
+  .portal-tabs button{min-height:44px;padding:10px 13px;font-size:12px}
+  .portal-filters label{font-size:13px}
+  .portal-record h3{font-size:18px}
+  .portal-record>p{font-size:13px;line-height:1.55}
+  .portal-record-person,.portal-record time,.portal-record>small{font-size:12px;line-height:1.5}
+  .portal-status-control{font-size:13px}
+  .portal-status-control select{min-height:46px;font-size:16px}
+  .token-create-copy h2,.break-note h2,.availability-card h2{font-size:25px}
+  .token-create-copy>p:last-child,.break-note>p,.availability-card .section-copy{font-size:14px;line-height:1.6}
+  .token-fields>label,.absence-form label{font-size:14px}
+  .diet-option{min-height:58px;padding:13px}
+  .diet-option strong{font-size:14px}
+  .diet-option small{font-size:12px}
+  .cooldown-box span,.cooldown-box small{font-size:12px}
+  .cooldown-box strong{font-size:30px}
+  .reason-chips span{font-size:12px;padding:8px 11px}
+  .absence-entry,.absence-results .absence-entry{font-size:13px;line-height:1.5}
+  .absence-entry strong,.absence-results .absence-entry strong{font-size:13px}
+  .estimate strong{font-size:13px}
+  .estimate small{font-size:12px}
+  .token-stamp strong{font-size:17px}
+  .token-stamp span,.token-timer-label,.token-expiry-note{font-size:12px}
+  .button,.profile-action,.portal-tabs button{min-height:44px}
+  .weekly-menu{padding:12px;border-radius:16px}
+  .weekly-menu-desktop{display:none}
+  .weekly-menu-mobile{display:grid;gap:12px}
+  .weekly-day-card{padding:16px;border:1px solid #e7ebe3;border-radius:13px;background:#fff}
+  .weekly-day-card>h2{margin:0 0 8px;color:#486d43;font:700 19px Manrope,Arial,sans-serif}
+  .weekly-day-meal{padding:12px 0;border-top:1px solid #edf0e9}
+  .weekly-day-meal>div strong,.weekly-day-meal>div small{display:block}
+  .weekly-day-meal>div strong{font-size:13px;color:#3b4539}
+  .weekly-day-meal>div small{margin-top:3px;font-size:11px;line-height:1.4;color:#899084}
+  .weekly-day-meal>p{margin:8px 0 0;color:#626b60;font-size:13px;line-height:1.55}
+}
+@media(max-width:390px){
+  .page-main{margin:0 12px}
+  .page-heading h1,.page-heading h1 em{font-size:31px}
+  .today-layout .meal-row{grid-template-columns:82px minmax(0,1fr) 30px;gap:7px}
+  .meal-time small{font-size:10px}
+  .today-layout .meal-info>span{font-size:12px}
+  .login-card{padding:20px 15px}
+  .login-secondary-actions{gap:8px}
+}

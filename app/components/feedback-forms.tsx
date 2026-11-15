@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { createClient } from "../../lib/supabase/client";
+import OtherComplaintForm from "./other-complaint-form";
 
 const indiaDate = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 
@@ -68,6 +69,6 @@ export default function FeedbackForms() {
   return <>
     <section className="feedback-panel panel feedback-page-card"><div className="feedback-intro"><p className="eyebrow">EVERYDAY FEEDBACK</p><h2>Help us make<br/>every meal better.</h2><p>Your rating and comments are available to the mess convenor and staff.</p></div><form className="feedback-form" onSubmit={submitFeedback}><label htmlFor="feedback-meal">Meal</label><select id="feedback-meal" name="meal" defaultValue="Dinner">{["Breakfast", "Lunch", "Snacks", "Dinner"].map((meal) => <option key={meal}>{meal}</option>)}</select><label>Rate today’s food</label><div className="stars">{[1,2,3,4,5].map((star) => <button type="button" key={star} aria-label={`${star} stars`} className={rating >= star ? "chosen" : ""} onClick={() => setRating(star)}>★</button>)}</div><label htmlFor="daily-feedback">Your feedback</label><textarea id="daily-feedback" name="comment" rows={4} maxLength={2000} placeholder="What went well, or what could improve?"/><button className="button button-dark" type="submit" disabled={busy}>{busy ? "Sending…" : "Send to convenor"}<span>→</span></button>{feedbackNotice && <p className="inline-notice" role="status">{feedbackNotice}</p>}</form></section>
     <section className="complaint-page-card panel"><div><p className="eyebrow">PRIVATE TO THE MESS COMMITTEE</p><h2>Serious mess concern?</h2><p className="section-copy">Your serious complaint is stored privately and visible to the committee and admin. You will get a complaint ID.</p></div><form className="complaint-form" onSubmit={submitComplaint}><label>Subject<input name="subject" required maxLength={160} placeholder="Short summary"/></label><label>Related meal<select name="meal" defaultValue=""><option value="">Not meal-specific / Other</option>{["Breakfast", "Lunch", "Snacks", "Dinner"].map((meal) => <option key={meal}>{meal}</option>)}</select></label><label className="full-field">What happened?<textarea name="details" rows={4} required maxLength={5000} placeholder="Share the details..."/></label><button className="button button-outline full-field" type="submit" disabled={busy}>{busy ? "Sending…" : "Send serious complaint"}<span>→</span></button>{complaintNotice && <p className="inline-notice full-field" role="status">{complaintNotice}</p>}</form></section>
-    <p className="inline-notice"><a href="/other-complaints">Report a hostel floor or room issue →</a></p>
+    <OtherComplaintForm />
   </>;
 }

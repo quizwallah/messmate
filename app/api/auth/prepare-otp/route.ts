@@ -43,15 +43,12 @@ export async function POST(request: Request) {
         .select("is_active, role")
         .eq("id", allowlistEntry.linked_auth_user_id)
         .maybeSingle();
-      if (profileError || !profile?.is_active || profile.role !== "student") return genericFailure();
-      const rosterProfileUpdate = {
-        ...(allowlistEntry.display_name ? { full_name: allowlistEntry.display_name } : {}),
-        ...(allowlistEntry.branch ? { branch: allowlistEntry.branch } : {}),
-      };
-      const { error: rosterSyncError } = Object.keys(rosterProfileUpdate).length
-        ? await admin.from("profiles").update(rosterProfileUpdate).eq("id", allowlistEntry.linked_auth_user_id)
-        : { error: null };
-      if (rosterSyncError) return genericFailure();
+      if (profileError || !profile?.is_active || profile.role !== "student") {
+        if (profileError) console.error("[auth/prepare-otp] linked profile lookup failed:", profileError.code ?? "unknown");
+        return genericFailure();
+      }
+      // Roster changes already sync profiles through the admin roster flow. Avoid a
+      // redundant write here so repeat code requests can reach Auth sooner.
       return NextResponse.json({ ready: true });
     }
 

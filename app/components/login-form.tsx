@@ -27,6 +27,7 @@ export default function LoginForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
+  const [requestPhase, setRequestPhase] = useState<"idle" | "preparing" | "sending">("idle");
   const [step, setStep] = useState<"password" | "scholar" | "otp">("password");
   const [otpPurpose, setOtpPurpose] = useState<"first-login" | "reset">("first-login");
   const [demoCodeMode, setDemoCodeMode] = useState(false);
@@ -55,18 +56,11 @@ export default function LoginForm() {
         password,
       });
       if (error) throw new Error("Scholar number or password is incorrect.");
-      const { data: userData } = await supabase.auth.getUser();
-      const profile = userData.user
-        ? await supabase.from("profiles").select("role, is_active").eq("id", userData.user.id).maybeSingle()
-        : { data: null, error: null };
-      if (profile.error || profile.data?.role !== "student" || !profile.data.is_active) {
-        await supabase.auth.signOut();
-        throw new Error("This account does not have student access. Use the Admin Portal sign-in.");
-      }
+      // This single server-side RPC also validates the active student role and verified college email.
       const { error: recordError } = await supabase.rpc("record_student_login");
       if (recordError) {
         await supabase.auth.signOut();
-        throw new Error("Could not verify your student account details. Contact the mess administrator.");
+        throw new Error("Could not verify this active student account. Contact the mess administrator.");
       }
       window.location.replace(safeNextPath(searchParams.get("next")));
     } catch (error) {
@@ -82,7 +76,12 @@ export default function LoginForm() {
       setNotice("Enter your valid scholar number first.");
       return;
     }
+    if (resendSeconds > 0) {
+      setNotice(`Please wait ${resendSeconds} seconds before requesting another email code.`);
+      return;
+    }
     setBusy(true);
+    setRequestPhase("preparing");
     setNotice("");
     try {
       const prepared = await fetch("/api/auth/prepare-otp", {
@@ -105,11 +104,7 @@ export default function LoginForm() {
         return;
       }
 
-      if (resendSeconds > 0) {
-        setNotice(`Please wait ${resendSeconds} seconds before requesting another email code.`);
-        return;
-      }
-
+      setRequestPhase("sending");
       const { error } = await supabase.auth.signInWithOtp({
         email: scholarEmail(normalized),
         options: { shouldCreateUser: false },
@@ -129,6 +124,7 @@ export default function LoginForm() {
       setNotice(error instanceof Error ? error.message : "We could not send a code. Please try again or contact the mess convenor.");
     } finally {
       setBusy(false);
+      setRequestPhase("idle");
     }
   }
 
@@ -193,17 +189,17 @@ export default function LoginForm() {
 
   return <section className="login-card panel">
     <p className="eyebrow">STUDENT ACCESS</p>
-    <h2>{step === "password" ? "Sign in to MessMate" : step === "scholar" ? otpPurpose === "reset" ? "Reset your password" : "Verify your college email" : otpPurpose === "reset" ? "Reset your password" : demoCodeMode ? "Enter the test code" : "Verify your college email"}</h2>
-    <p className="login-copy">Only students on the approved roster can sign in. Your college email is your scholar number followed by <strong>@stu.manit.ac.in</strong>. Your name and branch come from the approved student list.{demoCodeMode && <><br/><strong>Temporary testing is enabled:</strong> the test code is not emailed.</>}</p>
+    <h2>{step === "password" ? "Sign in to MessMate" : step === "scholar" ? otpPurpose === "reset" ? "Reset your password" : "Set up your account" : otpPurpose === "reset" ? "Reset your password" : demoCodeMode ? "Enter the test code" : "Verify your college email"}</h2>
+    <p className="login-copy">{step === "password" ? <>Only students on the approved roster can sign in. Your username is your scholar number; your college email is <strong>scholar number + @stu.manit.ac.in</strong>.</> : step === "scholar" ? <>Enter your scholar number. We’ll send a one-time code to your approved college email ending in <strong>@stu.manit.ac.in</strong>.</> : <>Only students on the approved roster can continue. Your name and branch come from the approved student list.{demoCodeMode && <><br/><strong>Temporary testing is enabled:</strong> the test code is not emailed.</>}</>}</p>
 
-    {step === "password" ? <form className="login-form" onSubmit={signIn}>
+    {step === "password" ? <><div className="login-first-time-callout"><div><strong>New to MessMate?</strong><span>Verify your college email and create a password.</span></div><button type="button" onClick={() => { setOtpPurpose("first-login"); setScholarNumber(""); setPassword(""); setNotice(""); setResendSeconds(0); setStep("scholar"); }} disabled={busy}>First time? Verify your email <span>→</span></button></div><p className="login-divider">Already set up? Sign in below.</p><form className="login-form" onSubmit={signIn}>
       <label>Scholar number<input autoComplete="username" value={scholarNumber} onChange={(event) => setScholarNumber(event.target.value)} placeholder="Enter your scholar number" required/></label>
       <label>Password<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" required/></label>
       <button className="button button-primary full-button" type="submit" disabled={busy}>{busy ? "Signing in…" : "Sign in"}<span>→</span></button>
-      <div className="login-secondary-actions"><button type="button" onClick={() => { setOtpPurpose("first-login"); setScholarNumber(""); setNotice(""); setStep("scholar"); }} disabled={busy}>First time? Verify your email</button><button type="button" onClick={() => { setOtpPurpose("reset"); setScholarNumber(""); setNotice(""); setStep("scholar"); }} disabled={busy}>Forgot password?</button></div>
-    </form> : step === "scholar" ? <form className="login-form" onSubmit={(event) => { event.preventDefault(); void requestCode(otpPurpose); }}>
+      <div className="login-secondary-actions"><button type="button" onClick={() => { setOtpPurpose("reset"); setScholarNumber(""); setNotice(""); setResendSeconds(0); setStep("scholar"); }} disabled={busy}>Forgot password?</button></div>
+    </form></> : step === "scholar" ? <form className="login-form" onSubmit={(event) => { event.preventDefault(); void requestCode(otpPurpose); }}>
       <label>Scholar number<input autoComplete="username" value={scholarNumber} onChange={(event) => setScholarNumber(event.target.value)} placeholder="Enter your scholar number" required/></label>
-      <button className="button button-primary full-button" type="submit" disabled={busy}>{busy ? "Preparing verification…" : "Send verification code"}<span>→</span></button>
+      <button className="button button-primary full-button" type="submit" disabled={busy}>{busy ? requestPhase === "sending" ? "Sending code…" : "Preparing account…" : "Send verification code"}<span>→</span></button>
       <div className="login-secondary-actions"><button type="button" onClick={() => { setStep("password"); setNotice(""); }} disabled={busy}>Back to sign in</button></div>
     </form> : <form className="login-form" onSubmit={verifyAndSetPassword}>
       <label>{demoCodeMode ? "Six-digit test code" : "Email verification code"}<input autoComplete="one-time-code" inputMode="numeric" maxLength={demoCodeMode ? 6 : 8} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} placeholder={demoCodeMode ? "Enter the 6-digit code" : "Enter the code from your email"} required/></label>
