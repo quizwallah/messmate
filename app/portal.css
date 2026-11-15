@@ -33,6 +33,21 @@
 .token-cooldown-settings>div>p:last-child,.token-cooldown-settings>small{margin:0;color:#737d70;font-size:12px;line-height:1.55}
 .token-cooldown-settings>small{grid-column:1/-1}
 @media(max-width:680px){.token-cooldown-settings{grid-template-columns:1fr;padding:16px}.token-cooldown-settings>div,.token-cooldown-settings>small{grid-column:auto}.token-cooldown-settings>.button{width:100%}}
+.active-cooldowns{display:grid;gap:11px;margin:8px 0 14px}
+.active-cooldowns .section-heading{margin-bottom:0}
+.active-cooldowns h3{margin:0;color:#293329;font:700 18px Manrope,Arial,sans-serif}
+.active-cooldown-card{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:17px 19px;border:1px solid #e7eae4}
+.active-cooldown-main{display:grid;gap:6px;min-width:0}
+.active-cooldown-main strong{font-size:14px;color:#30392e}
+.active-cooldown-main>span{font-size:12px;color:#70796d}
+.active-cooldown-main>b{font:700 16px Manrope,Arial,sans-serif;color:#9a5832;font-variant-numeric:tabular-nums}
+.cooldown-status{font-size:11px;color:#94633c}
+.cooldown-reset-backdrop{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:20px;background:#17201880;backdrop-filter:blur(3px)}
+.cooldown-reset-dialog{position:relative;width:min(100%,480px);padding:28px;display:grid;gap:13px;box-shadow:0 20px 70px #17201840}
+.cooldown-reset-dialog h2{margin:0;color:#283327;font:700 23px Manrope,Arial,sans-serif}
+.cooldown-reset-dialog>p:not(.eyebrow){margin:0;color:#6f796c;font-size:13px;line-height:1.6}
+.cooldown-reset-close{position:absolute;right:14px;top:12px;border:0;background:transparent;color:#5f685c;font-size:27px;cursor:pointer}
+@media(max-width:680px){.active-cooldown-card{align-items:stretch;flex-direction:column;padding:15px}.active-cooldown-card>.button{width:100%}.cooldown-reset-dialog{padding:24px 19px}}
 .portal-records>h2{margin:0 0 2px}
 .portal-record{padding:18px 20px;border:1px solid #e7eae4;box-shadow:0 4px 14px #34452a06}
 .portal-record h3{font:700 14px Manrope,Arial,sans-serif;color:#303a2e;margin:10px 0 6px}
