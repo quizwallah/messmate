@@ -8,6 +8,7 @@ import { createClient } from "../../lib/supabase/client";
 export default function StaffLoginForm() {
   const [scholarNumber, setScholarNumber] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -44,7 +45,7 @@ export default function StaffLoginForm() {
 
   return <section className="admin-login-form-card"><form className="login-form" onSubmit={signIn}>
     <label>Admin email or staff scholar number<input autoComplete="username" value={scholarNumber} onChange={(event) => setScholarNumber(event.target.value)} placeholder="Enter your email or scholar number" required/></label>
-    <label>Password<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" required/></label>
+    <label>Password<div className="password-field"><input type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" required/><button className="password-toggle" type="button" aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword} onClick={() => setShowPassword((visible) => !visible)}>{showPassword ? "Hide" : "Show"}</button></div></label>
     <button className="button button-primary full-button admin-login-submit" type="submit" disabled={busy}>{busy ? "Signing in…" : "Continue to admin portal"}<span>→</span></button>
   </form>{notice && <p className="inline-notice" role="status">{notice}</p>}<div className="admin-login-card-foot"><span aria-hidden="true">⌑</span><p>Your assigned role controls which management tools you can access.</p></div></section>;
 }

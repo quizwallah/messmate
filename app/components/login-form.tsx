@@ -26,6 +26,7 @@ export default function LoginForm() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
   const [requestPhase, setRequestPhase] = useState<"idle" | "preparing" | "sending">("idle");
   const [step, setStep] = useState<"password" | "scholar" | "otp">("password");
@@ -194,7 +195,7 @@ export default function LoginForm() {
 
     {step === "password" ? <><div className="login-first-time-callout"><div><strong>New to MessMate?</strong><span>Verify your college email and create a password.</span></div><button type="button" onClick={() => { setOtpPurpose("first-login"); setScholarNumber(""); setPassword(""); setNotice(""); setResendSeconds(0); setStep("scholar"); }} disabled={busy}>First time? Verify your email <span>→</span></button></div><p className="login-divider">Already set up? Sign in below.</p><form className="login-form" onSubmit={signIn}>
       <label>Scholar number<input autoComplete="username" value={scholarNumber} onChange={(event) => setScholarNumber(event.target.value)} placeholder="Enter your scholar number" required/></label>
-      <label>Password<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" required/></label>
+      <label>Password<div className="password-field"><input type={showSignInPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" required/><button className="password-toggle" type="button" aria-label={showSignInPassword ? "Hide password" : "Show password"} aria-pressed={showSignInPassword} onClick={() => setShowSignInPassword((visible) => !visible)}>{showSignInPassword ? "Hide" : "Show"}</button></div></label>
       <button className="button button-primary full-button" type="submit" disabled={busy}>{busy ? "Signing in…" : "Sign in"}<span>→</span></button>
       <div className="login-secondary-actions"><button type="button" onClick={() => { setOtpPurpose("reset"); setScholarNumber(""); setNotice(""); setResendSeconds(0); setStep("scholar"); }} disabled={busy}>Forgot password?</button></div>
     </form></> : step === "scholar" ? <form className="login-form" onSubmit={(event) => { event.preventDefault(); void requestCode(otpPurpose); }}>
