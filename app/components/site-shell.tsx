@@ -58,7 +58,7 @@ export default function SiteShell({ children }: { children: ReactNode }) {
     <header className="topbar">
       <Link className="brand" href="/"><span className="brand-mark">M</span><span>mess<span className="brand-light">mate</span></span></Link>
       <nav aria-label="Main navigation">
-        {(role && role !== "student" ? links.filter(([href]) => ["/", "/weekly-menu", "/updates"].includes(href)) : scholarNumber ? links : links.filter(([href]) => ["/", "/weekly-menu", "/updates"].includes(href))).map(([href, label]) => <Link className={pathname === href ? "active" : ""} href={href} key={href}>{label}</Link>)}
+        {(role && role !== "student" ? links.filter(([href]) => ["/", "/weekly-menu", "/updates"].includes(href)) : scholarNumber ? links : links.filter(([href]) => ["/", "/weekly-menu", "/updates"].includes(href))).map(([href, label]) => <Link className={pathname === href ? "active" : ""} href={href} key={href} prefetch={href === "/" ? true : undefined}>{label}</Link>)}
         {scholarNumber && role === "student" && <Link className={pathname === "/my-complaints" ? "active" : ""} href="/my-complaints">My complaints</Link>}
         {role && role !== "student" && <Link className={pathname.startsWith("/portal") ? "active" : ""} href="/portal">Staff portal</Link>}
       </nav>
