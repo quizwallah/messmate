@@ -3,6 +3,7 @@ import "./globals.css";
 import "./features.css";
 import "./portal.css";
 import "./dark-theme.css";
+import SiteShell from "./components/site-shell";
 
 export const metadata: Metadata = {
   title: "messmate | Hostel Mess",
@@ -15,7 +16,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: `try{document.documentElement.dataset.theme=localStorage.getItem("messmate-theme")==="dark"?"dark":"light"}catch{}` }} />
       </head>
-      <body>{children}</body>
+      <body><SiteShell>{children}</SiteShell></body>
     </html>
   );
 }

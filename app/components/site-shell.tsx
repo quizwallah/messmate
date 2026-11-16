@@ -54,6 +54,10 @@ export default function SiteShell({ children }: { children: ReactNode }) {
     window.location.assign("/");
   }
 
+  const isAdminLogin = pathname.startsWith("/staff/login");
+
+  if (isAdminLogin) return <>{children}</>;
+
   return <>
     <header className="topbar">
       <Link className="brand" href="/"><span className="brand-mark">M</span><span>mess<span className="brand-light">mate</span></span></Link>
