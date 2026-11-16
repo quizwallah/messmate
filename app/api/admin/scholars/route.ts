@@ -15,8 +15,8 @@ async function isAdmin() {
 }
 
 function validateRoster(input: unknown): { rows?: RosterEntry[]; duplicates?: number; error?: string } {
-  if (!Array.isArray(input) || input.length === 0 || input.length > 2500) {
-    return { error: "Import between 1 and 2,500 student records." };
+  if (!Array.isArray(input) || input.length === 0 || input.length > 1200) {
+    return { error: "Import between 1 and 1,200 student records." };
   }
   const byScholar = new Map<string, RosterEntry>();
   let duplicates = 0;
@@ -38,21 +38,28 @@ function validateRoster(input: unknown): { rows?: RosterEntry[]; duplicates?: nu
   return { rows: [...byScholar.values()], duplicates };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   if (!await isAdmin()) return NextResponse.json({ error: "Admin access required." }, { status: 403 });
   const admin = createAdminClient();
+  if (new URL(request.url).searchParams.get("countOnly") === "true") {
+    const { count, error } = await admin.from("scholar_allowlist")
+      .select("scholar_number", { count: "exact", head: true })
+      .eq("is_active", true);
+    if (error) return NextResponse.json({ error: "Could not count the active student roster." }, { status: 500 });
+    return NextResponse.json({ activeCount: count ?? 0 });
+  }
   const scholars: { scholar_number: string; display_name: string | null; branch: string | null; is_active: boolean; linked_auth_user_id: string | null; created_at: string }[] = [];
   const pageSize = 500;
   let totalCount = 0;
-  for (let offset = 0; offset < 1200; offset += pageSize) {
+  for (let offset = 0; ; offset += pageSize) {
     const { data, error, count } = await admin.from("scholar_allowlist")
       .select("scholar_number, display_name, branch, is_active, linked_auth_user_id, created_at", { count: "exact" })
       .order("scholar_number")
-      .range(offset, Math.min(offset + pageSize - 1, 1199));
+      .range(offset, offset + pageSize - 1);
     if (error) return NextResponse.json({ error: "Could not load the approved scholar list." }, { status: 500 });
     if (offset === 0) totalCount = count ?? data?.length ?? 0;
     scholars.push(...(data ?? []));
-    if ((data?.length ?? 0) < pageSize) break;
+    if ((data?.length ?? 0) < pageSize || scholars.length >= totalCount) break;
   }
   return NextResponse.json({ scholars, count: totalCount || scholars.length, maximum: 1200, truncated: totalCount > scholars.length });
 }
@@ -106,15 +113,16 @@ export async function PUT(request: Request) {
     const admin = createAdminClient();
     const existing: ExistingScholar[] = [];
     const pageSize = 500;
-    for (let offset = 0; offset < 1200; offset += pageSize) {
+    let existingCount = 0;
+    for (let offset = 0; ; offset += pageSize) {
       const { data, error, count } = await admin.from("scholar_allowlist")
         .select("scholar_number, linked_auth_user_id, is_active", { count: "exact" })
         .order("scholar_number")
-        .range(offset, Math.min(offset + pageSize - 1, 1199));
+        .range(offset, offset + pageSize - 1);
       if (error) return NextResponse.json({ error: "Could not read the current roster. No changes were made." }, { status: 500 });
-      if (count !== null && count > 1200) return NextResponse.json({ error: "The current roster exceeds the supported 1,200 records. No changes were made." }, { status: 409 });
+      if (offset === 0) existingCount = count ?? data?.length ?? 0;
       existing.push(...((data ?? []) as ExistingScholar[]));
-      if ((data?.length ?? 0) < pageSize) break;
+      if ((data?.length ?? 0) < pageSize || existing.length >= existingCount) break;
     }
     const roleById = new Map<string, string>();
     const linkedIds = existing.map((row) => row.linked_auth_user_id).filter((id): id is string => Boolean(id));

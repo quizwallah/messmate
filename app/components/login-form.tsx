@@ -130,8 +130,8 @@ export default function LoginForm() {
 
   async function verifyAndSetPassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!(demoCodeMode ? /^\d{6}$/.test(code) : /^\d{6,8}$/.test(code))) {
-      setNotice(demoCodeMode ? "Enter the six-digit test code." : "Enter the 6–8 digit code from your college email.");
+    if (!/^\d{6}$/.test(code)) {
+      setNotice(demoCodeMode ? "Enter the six-digit test code." : "Enter the six-digit code from your college email.");
       return;
     }
     if (newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
@@ -202,7 +202,7 @@ export default function LoginForm() {
       <button className="button button-primary full-button" type="submit" disabled={busy}>{busy ? requestPhase === "sending" ? "Sending code…" : "Preparing account…" : "Send verification code"}<span>→</span></button>
       <div className="login-secondary-actions"><button type="button" onClick={() => { setStep("password"); setNotice(""); }} disabled={busy}>Back to sign in</button></div>
     </form> : <form className="login-form" onSubmit={verifyAndSetPassword}>
-      <label>{demoCodeMode ? "Six-digit test code" : "Email verification code"}<input autoComplete="one-time-code" inputMode="numeric" maxLength={demoCodeMode ? 6 : 8} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} placeholder={demoCodeMode ? "Enter the 6-digit code" : "Enter the code from your email"} required/></label>
+      <label>{demoCodeMode ? "Six-digit test code" : "Six-digit email code"}<input autoComplete="one-time-code" inputMode="numeric" maxLength={6} pattern="\d{6}" value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="Enter the 6-digit code" required/></label>
       <label>New password<input type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={8} pattern="(?=.*[A-Za-z])(?=.*[0-9]).{8,}" title="At least eight characters, including a letter and a number" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="8+ characters, with a letter and number" required/></label>
       <label>Confirm password<input type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={8} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Re-enter your password" required/></label>
       <label className="password-visibility"><input type="checkbox" checked={showPassword} onChange={(event) => setShowPassword(event.target.checked)}/>Show passwords</label>
